@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#071310">
+  <title>GCA / FINAL APPROACH</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="console">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">✳</span><div><strong>GCA</strong><small>FINAL APPROACH CONTROL</small></div></div>
+      <div class="top-right"><span class="live-dot"></span><span>RADAR ACTIVE</span><span class="clock" id="clock">00:00</span></div>
+    </header>
+
+    <section class="status-strip" aria-label="飛行状況">
+      <div><span class="label">CALLSIGN</span><strong id="callsign">SIM 204</strong></div>
+      <div><span class="label">RANGE</span><strong><span id="range">--</span> <em>NM</em></strong></div>
+      <div><span class="label">HEADING</span><strong><span id="heading">---</span><em>°</em></strong></div>
+      <div><span class="label">SCORE</span><strong id="score">0000</strong></div>
+    </section>
+
+    <section class="radar-wrap" aria-label="レーダー画面">
+      <canvas id="radar" aria-label="航空機と滑走路のレーダー表示"></canvas>
+      <div class="radar-top"><span>PRECISION APPROACH RADAR</span><span>RWY 09 <b>●</b></span></div>
+      <div class="radar-bottom"><span>35° 39′ N / 139° 46′ E</span><span id="radarState">SCAN 01</span></div>
+      <div class="message" id="message" aria-live="polite"><span class="message-kicker">TOWER</span><span id="messageText">機体を滑走路へ誘導してください</span></div>
+    </section>
+
+    <section class="control-panel">
+      <div class="panel-heading"><div><span class="label">VECTOR CONTROL</span><h1>ヘディング指示</h1></div><span class="instruction">ダイヤルを回して針路を設定</span></div>
+      <div class="control-content">
+        <div class="dial-side">
+          <div class="dial" id="dial" role="slider" tabindex="0" aria-label="指示ヘディング" aria-valuemin="0" aria-valuemax="359" aria-valuenow="90">
+            <div class="dial-ticks"></div><div class="dial-face"><span class="dial-n">N</span><span class="dial-e">E</span><span class="dial-s">S</span><span class="dial-w">W</span><span class="dial-pointer" id="dialPointer"></span><span class="dial-center"></span></div>
+          </div>
+          <div class="dial-hint">↻ DRAG TO TURN</div>
+        </div>
+        <div class="command-side">
+          <span class="label">SELECTED HEADING</span>
+          <div class="selected"><span id="selectedHeading">090</span><sup>°</sup></div>
+          <div class="adjust"><button id="minus" aria-label="ヘディングを5度下げる">− 5°</button><button id="plus" aria-label="ヘディングを5度上げる">+ 5°</button></div>
+          <button class="issue" id="issue"><span>↗</span> 指示を送信 <small>TRANSMIT</small></button>
+          <p class="command-note" id="commandNote">機体は指示された針路へ旋回します</p>
+        </div>
+      </div>
+    </section>
+
+    <footer><span>GCA / SIMULATION MODE</span><button id="helpButton">遊び方 <span>?</span></button></footer>
+  </main>
+
+  <div class="overlay" id="overlay" hidden><div class="modal"><span class="label" id="modalKicker">BRIEFING</span><h2 id="modalTitle">管制を開始</h2><p id="modalText"></p><div class="modal-info" id="modalInfo"></div><button id="modalButton">管制を開始 <span>→</span></button></div></div>
+  <script src="game.js"></script>
+</body>
+</html>
