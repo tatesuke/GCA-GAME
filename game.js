@@ -26,14 +26,24 @@ function approachHalfWidth(completed){
   return .032+.004*Math.sin(completed*1.7);
 }
 function setSelected(a){selected=norm(Math.round(a));ui.selected.textContent=fmt(selected);ui.pointer.style.transform=`rotate(${selected+180}deg)`;ui.dial.setAttribute('aria-valuenow',selected)}
-function speak(t){
-  if(!voiceEnabled)return;
+function speak(t,onFinished){
+  if(!voiceEnabled)return false;
   window.speechSynthesis.cancel();
   const utterance=new SpeechSynthesisUtterance(t);
   utterance.lang='en-US';utterance.rate=.94;utterance.pitch=.88;
+  if(onFinished){utterance.onend=onFinished;utterance.onerror=onFinished}
   window.speechSynthesis.speak(utterance);
+  return true;
 }
-function showMessage(t,seconds=4,spoken=t){ui.messageText.textContent=t;ui.message.style.opacity='1';messageUntil=performance.now()+seconds*1000;speak(spoken)}
+function showMessage(t,seconds=4,spoken=t,onFinished){ui.messageText.textContent=t;ui.message.style.opacity='1';messageUntil=performance.now()+seconds*1000;return speak(spoken,onFinished)}
+function releaseHeading(command){
+  if(!playing||plane!==command.plane||plane.pendingHeading!==command)return;
+  const wait=command.sentAt+1200-performance.now();
+  if(wait>0){setTimeout(()=>releaseHeading(command),wait);return}
+  plane.target=command.heading;
+  plane.pendingHeading=null;
+  ui.note.textContent=`EXECUTING HEADING ${fmt(command.heading)}°`;
+}
 function courseAdvisory(){
   const offset=plane.y-runway.y,absolute=Math.abs(offset);
   let phrase;
@@ -90,7 +100,7 @@ function newPlane(){
   const starts=[{x:.08,y:clamp(runway.y-.26,.08,.92),h:115},{x:.12,y:clamp(runway.y+.25,.08,.92),h:65},{x:.16,y:clamp(runway.y-.34,.08,.92),h:130},{x:.15,y:clamp(runway.y+.33,.08,.92),h:50}];
   const s=starts[variant];
   const type=aircraftTypes[Math.floor(Math.random()*aircraftTypes.length)];
-  plane={x:s.x,y:s.y,h:s.h,target:s.h,call:callsigns[(nextCallsign-1)%callsigns.length],type,trail:[],speed:type.speed+Math.min(landings,6)*.0008,lastTrail:0,lastCourseCall:performance.now(),lastCommandAt:0,lastCourseAbs:null,locSeconds:0};
+  plane={x:s.x,y:s.y,h:s.h,target:s.h,call:callsigns[(nextCallsign-1)%callsigns.length],type,trail:[],speed:type.speed+Math.min(landings,6)*.0008,lastTrail:0,lastCourseCall:performance.now(),lastCommandAt:0,lastCourseAbs:null,locSeconds:0,pendingHeading:null};
   $('locStatus').textContent=`LOC · ACQUIRE 0.0 / ${requiredLocSeconds}s`;
   $('locStatus').classList.remove('established');
   $('aircraftType').textContent=type.name;
@@ -103,6 +113,7 @@ function newPlane(){
 function start(){score=0;landings=0;misses=0;nextCallsign=0;elapsed=0;$('clock').textContent='00:00';ui.overlay.hidden=true;playing=true;newPlane();lastTime=performance.now();requestAnimationFrame(frame)}
 function end(success,reason='MISSED APPROACH.'){
   playing=false;
+  plane.pendingHeading=null;
   if(success){landings++;const locBonus=Math.round(Math.min(plane.locSeconds,25)*10),points=Math.max(100,500-Math.round(plane.trail.length*.7))+locBonus;score+=points;showMessage('OVER LANDING THRESHOLD. TOUCHDOWN.',10);setTimeout(()=>{if(!playing)modal('TOUCHDOWN','着陸成功',`${plane.call} を滑走路へ安全に誘導しました。` ,`コース維持 <strong>${plane.locSeconds.toFixed(1)}秒</strong>　ボーナス <strong>+${locBonus}</strong><br>獲得スコア <strong>${String(score).padStart(4,'0')}</strong>　着陸機数 <strong>${landings}</strong>`,`次の機体 →`,()=>{ui.overlay.hidden=true;playing=true;newPlane();lastTime=performance.now();requestAnimationFrame(frame)})},650)}
   else{misses++;showMessage(reason,10);setTimeout(()=>{if(!playing)modal('MISSED APPROACH','進入失敗',reason==='LOCALIZER NOT ESTABLISHED.'?'進入コースを十分に維持できませんでした。センターライン上を7秒間飛行してください。':`${plane.call} が管制空域を離れました。もう一度誘導に挑戦してください。`,`累計スコア <strong>${String(score).padStart(4,'0')}</strong>　着陸機数 <strong>${landings}</strong>`,`やり直す →`,start)},650)}
 }
@@ -125,7 +136,7 @@ function update(dt,t){
     end(onRunway&&plane.locSeconds>=requiredLocSeconds,onRunway?'LOCALIZER NOT ESTABLISHED.':'MISSED APPROACH.');return;
   }
   if(plane.x<-.07||plane.x>1.08||plane.y<-.1||plane.y>1.1){end(false);return}
-  if(plane.x>runway.x-.5&&t-plane.lastCourseCall>=4000&&t-plane.lastCommandAt>=2500){courseAdvisory();plane.lastCourseCall=t}
+  if(!plane.pendingHeading&&plane.x>runway.x-.5&&t-plane.lastCourseCall>=4000&&t-plane.lastCommandAt>=2500){courseAdvisory();plane.lastCourseCall=t}
   ui.range.textContent=(dist*22).toFixed(1);ui.heading.textContent=fmt(plane.h);ui.callsign.textContent=plane.call;ui.score.textContent=String(score).padStart(4,'0');
 }
 function resize(){const r=canvas.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(r.width*d);canvas.height=Math.round(r.height*d);ctx.setTransform(d,0,0,d,0,0)}
@@ -162,8 +173,17 @@ function dialFromPointer(e){const r=ui.dial.getBoundingClientRect(),x=e.clientX-
 ui.dial.addEventListener('pointerdown',e=>{ui.dial.setPointerCapture(e.pointerId);dialFromPointer(e)});ui.dial.addEventListener('pointermove',e=>{if(ui.dial.hasPointerCapture(e.pointerId))dialFromPointer(e)});
 ui.dial.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowDown','ArrowRight','ArrowUp'].includes(e.key)){e.preventDefault();setSelected(selected+(e.key==='ArrowLeft'||e.key==='ArrowDown'?-5:5))}});
 $('minus').onclick=()=>setSelected(selected-5);$('plus').onclick=()=>setSelected(selected+5);
-$('issue').onclick=()=>{if(!playing||!ui.overlay.hidden)return;plane.target=selected;plane.lastCommandAt=performance.now();const spoken=`HEADING ${radioHeading(selected)}.`;ui.note.textContent=`PRONUNCIATION: ${radioHeading(selected)}`;showMessage(`HEADING ${fmt(selected)}.`,3,spoken)};
-$('voiceButton').onclick=()=>{voiceEnabled=!voiceEnabled;$('voiceButton').textContent=voiceEnabled?'VOICE ON':'VOICE OFF';$('voiceButton').setAttribute('aria-pressed',String(voiceEnabled));if(!voiceEnabled&&voiceSupported)window.speechSynthesis.cancel()};
+$('issue').onclick=()=>{
+  if(!playing||!ui.overlay.hidden)return;
+  const command={plane,heading:selected,sentAt:performance.now()};
+  plane.pendingHeading=command;plane.lastCommandAt=command.sentAt;
+  const spoken=`HEADING ${radioHeading(selected)}.`;
+  ui.note.textContent=`TRANSMITTING: ${radioHeading(selected)}`;
+  const voiced=showMessage(`HEADING ${fmt(selected)}.`,3,spoken,()=>releaseHeading(command));
+  if(voiced){setTimeout(()=>{if(plane===command.plane&&plane.pendingHeading===command){window.speechSynthesis.cancel();releaseHeading(command)}},10000)}
+  else setTimeout(()=>releaseHeading(command),1800);
+};
+$('voiceButton').onclick=()=>{voiceEnabled=!voiceEnabled;$('voiceButton').textContent=voiceEnabled?'VOICE ON':'VOICE OFF';$('voiceButton').setAttribute('aria-pressed',String(voiceEnabled));if(!voiceEnabled&&voiceSupported){window.speechSynthesis.cancel();if(plane?.pendingHeading)releaseHeading(plane.pendingHeading)}};
 if(!voiceSupported){$('voiceButton').hidden=true;$('voiceButton').setAttribute('aria-pressed','false')}
 $('helpButton').onclick=()=>modal('HOW TO PLAY','遊び方','レーダーの機体を滑走路 RWY 09 へ誘導する、シンプルな管制ゲームです。','① ダイヤルでヘディングを選択し、指示を送信<br>② 点線に挟まれた進入コースで機体を東向きに整える<br>③ コース内を合計7秒飛び、滑走路へ進入<br><br>GCA は ON COURSE や LEFT OF COURSE などを約4秒ごとに通知します。LOC はコース維持時間です。風は飛行中も変わります。オレンジの矢印は風によって流される方向と強さを示します。','ゲームに戻る →',()=>{ui.overlay.hidden=true;lastTime=performance.now()});
 window.addEventListener('resize',()=>{resize();draw(performance.now())});
