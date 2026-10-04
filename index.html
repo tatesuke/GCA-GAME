@@ -15,7 +15,7 @@
     </header>
 
     <section class="status-strip" aria-label="飛行状況">
-      <div><span class="label">CALLSIGN</span><strong id="callsign">SIM 204</strong></div>
+      <div><span class="label">CALLSIGN</span><strong id="callsign">SIM 204</strong><span class="aircraft-type" id="aircraftType">機種 --</span></div>
       <div><span class="label">RANGE</span><strong><span id="range">--</span> <em>NM</em></strong></div>
       <div><span class="label">HEADING</span><strong><span id="heading">---</span><em>°</em></strong></div>
       <div><span class="label">SCORE</span><strong id="score">0000</strong></div>
@@ -24,8 +24,9 @@
     <section class="radar-wrap" aria-label="レーダー画面">
       <canvas id="radar" aria-label="航空機と滑走路のレーダー表示"></canvas>
       <div class="radar-top"><span>PRECISION APPROACH RADAR</span><span>RWY 09 <b>●</b></span></div>
-      <div class="radar-bottom"><span>35° 39′ N / 139° 46′ E</span><span id="radarState">SCAN 01</span></div>
-      <div class="message" id="message" aria-live="polite"><span class="message-kicker">TOWER</span><span id="messageText">機体を滑走路へ誘導してください</span></div>
+      <div class="loc-status" id="locStatus">LOC · ACQUIRE 0 / 7s</div>
+      <div class="radar-bottom"><span id="wind">WIND CALM</span><span id="gateWidth">GATE 100%</span><span id="radarState">SCAN 01</span></div>
+      <div class="message" id="message" aria-live="polite"><span class="message-kicker">GCA</span><span id="messageText">機体を滑走路へ誘導してください</span></div>
     </section>
 
     <section class="control-panel">
@@ -47,7 +48,7 @@
       </div>
     </section>
 
-    <footer><span>GCA / SIMULATION MODE</span><button id="helpButton">遊び方 <span>?</span></button></footer>
+    <footer><span>GCA / SIMULATION MODE</span><button id="voiceButton" aria-pressed="true">VOICE ON</button><button id="helpButton">遊び方 <span>?</span></button></footer>
   </main>
 
   <div class="overlay" id="overlay" hidden><div class="modal"><span class="label" id="modalKicker">BRIEFING</span><h2 id="modalTitle">管制を開始</h2><p id="modalText"></p><div class="modal-info" id="modalInfo"></div><button id="modalButton">管制を開始 <span>→</span></button></div></div>
