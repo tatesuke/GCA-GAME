@@ -161,7 +161,13 @@ function updateLocalizer(dt){
   $('locStatus').textContent=`LOC · ${state} ${Math.min(requiredLocSeconds,plane.locSeconds).toFixed(1)} / ${requiredLocSeconds}s`;
   $('locStatus').classList.toggle('established',doubled);
 }
-function modal(kicker,title,text,info,button,action){ui.modalKicker.textContent=kicker;ui.modalTitle.textContent=title;ui.modalText.textContent=text;ui.modalInfo.innerHTML=info;ui.modalButton.textContent=button;ui.modalButton.onclick=action;ui.overlay.hidden=false}
+function modal(kicker,title,text,info,button,action){ui.modalKicker.textContent=kicker;ui.modalTitle.textContent=title;ui.modalText.textContent=text;ui.modalInfo.innerHTML=info;ui.modalButton.textContent=button;ui.modalButton.onclick=action;ui.overlay.querySelector('.modal').classList.toggle('missed',kicker==='MISSED APPROACH');$('modalSound').hidden=kicker!=='BRIEFING'||!voiceSupported;$('shareScore').hidden=kicker!=='MISSED APPROACH';$('shareScore').textContent='Share Score ↗';ui.overlay.hidden=false}
+$('shareScore').onclick=async()=>{
+  const text=`GCAで${Math.floor(score)}点とりました！`;
+  if(navigator.share){try{await navigator.share({text});return}catch(error){if(error.name==='AbortError')return}}
+  try{await navigator.clipboard.writeText(text);$('shareScore').textContent='Copied ✓'}
+  catch{window.prompt('Copy this text to share your score',text)}
+};
 function newPlane(retry=false){
   const previous=retry?plane:null;
   clearRadio();
@@ -353,7 +359,7 @@ $('issue').onclick=()=>{
   const voiced=showMessage(`${instruction}.`,3,spoken,()=>releaseHeading(command),()=>{if(plane===command.plane&&plane.pendingHeading===command)ui.note.textContent=`TRANSMITTING: ${radioHeading(command.heading)}`},'heading');
   if(!voiced)setTimeout(()=>releaseHeading(command),1800);
 };
-$('voiceButton').onclick=()=>{voiceEnabled=!voiceEnabled;$('voiceButton').textContent=voiceEnabled?'VOICE ON':'VOICE OFF';$('voiceButton').setAttribute('aria-pressed',String(voiceEnabled));if(!voiceEnabled)clearRadio(true)};
+$('voiceButton').onclick=$('modalVoiceButton').onclick=()=>{voiceEnabled=!voiceEnabled;$('voiceButton').textContent=voiceEnabled?'VOICE ON':'VOICE OFF';$('voiceButton').setAttribute('aria-pressed',String(voiceEnabled));$('modalVoiceButton').textContent=voiceEnabled?'ON':'OFF';$('modalVoiceButton').setAttribute('aria-pressed',String(voiceEnabled));if(!voiceEnabled)clearRadio(true)};
 if(!voiceSupported){$('voiceButton').hidden=true;$('voiceButton').setAttribute('aria-pressed','false')}
 window.addEventListener('resize',()=>{resize();draw(performance.now())});
 // Keep the instructions tied to the current approach direction.
