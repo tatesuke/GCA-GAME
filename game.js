@@ -3,6 +3,7 @@ const ctx = canvas.getContext('2d');
 const $ = id => document.getElementById(id);
 const ui = {callsign:$('callsign'),range:$('range'),heading:$('heading'),score:$('score'),selected:$('selectedHeading'),pointer:$('dialPointer'),dial:$('dial'),message:$('message'),messageText:$('messageText'),note:$('commandNote'),overlay:$('overlay'),modalKicker:$('modalKicker'),modalTitle:$('modalTitle'),modalText:$('modalText'),modalInfo:$('modalInfo'),modalButton:$('modalButton'),radarState:$('radarState')};
 const runway = {x:.5,y:.5,heading:90,halfWidth:.047};
+const camera = {x:.5,y:.5,zoom:1.3};
 const wind = {y:0,base:0,target:0,max:0,knots:0,nextShift:0,lastDisplay:0};
 const requiredLocSeconds=7;
 let selected = 90, plane, score = 0, landings = 0, misses = 0, playing = false, lastTime = 0, sweep = 0, messageUntil = 0, nextCallsign = 0, elapsed = 0;
@@ -119,6 +120,7 @@ function modal(kicker,title,text,info,button,action){ui.modalKicker.textContent=
 function newPlane(){
   clearRadio();
   runway.heading=Math.floor(Math.random()*72)*5;
+  resetRadar();
   document.querySelector('.radar-top span:last-child').textContent=`RWY ${String(Math.round(runway.heading/10)%36).padStart(2,'0')} ◆`;
   runway.halfWidth=approachHalfWidth(landings);
   $('gateWidth').textContent=`GATE ${Math.round(runway.halfWidth/.047*100)}%`;
@@ -175,6 +177,8 @@ function update(dt,t){
   ui.range.textContent=(dist*22).toFixed(1);ui.heading.textContent=fmt(plane.h);ui.callsign.textContent=plane.call;ui.score.textContent=String(score).padStart(4,'0');
 }
 function resize(){const r=canvas.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(r.width*d);canvas.height=Math.round(r.height*d);ctx.setTransform(d,0,0,d,0,0)}
+function resetRadar(){const center=coursePoint(-.25);camera.x=center.x;camera.y=center.y;camera.zoom=1.3}
+function changeRadarZoom(factor){camera.zoom=clamp(camera.zoom*factor,.75,2.4);draw(performance.now())}
 function drawAircraftSymbol(type){
   ctx.beginPath();
   if(type==='helicopter'){
@@ -189,7 +193,8 @@ function drawAircraftSymbol(type){
   if(type==='helicopter'){ctx.strokeStyle='#d1ffbf';ctx.lineWidth=2;ctx.stroke()}else ctx.fill();
 }
 function draw(t){const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;ctx.clearRect(0,0,w,h);ctx.fillStyle='#07170e';ctx.fillRect(0,0,w,h);
-  const cx=w*.5,cy=h*.52,R=Math.min(w,h)*.43;
+  ctx.save();ctx.translate(w/2,h/2);ctx.scale(camera.zoom,camera.zoom);ctx.translate(-camera.x*w,-camera.y*h);
+  const cx=runway.x*w,cy=runway.y*h,R=Math.min(w,h)*.43;
   ctx.save();ctx.strokeStyle='#315d3a';ctx.lineWidth=1;for(let i=1;i<=4;i++){ctx.beginPath();ctx.arc(cx,cy,R*i/4,0,Math.PI*2);ctx.stroke()}
   ctx.strokeStyle='#244a31';ctx.beginPath();ctx.moveTo(cx-R-25,cy);ctx.lineTo(cx+R+25,cy);ctx.moveTo(cx,cy-R-25);ctx.lineTo(cx,cy+R+25);ctx.stroke();
   const pixel=(along,side=0)=>{const p=coursePoint(along,side);return {x:p.x*w,y:p.y*h}};
@@ -203,6 +208,7 @@ function draw(t){const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)retu
   const runwayLabel=pixel(.02,-runway.halfWidth);ctx.fillStyle='#a2d89a';ctx.fillText(`RWY ${String(Math.round(runway.heading/10)%36).padStart(2,'0')}`,runwayLabel.x,runwayLabel.y);
   sweep=(t*.00035)%(Math.PI*2);const grad=ctx.createConicGradient(sweep,cx,cy);grad.addColorStop(0,'#9df6a900');grad.addColorStop(.94,'#9df6a900');grad.addColorStop(1,'#9df6a924');ctx.fillStyle=grad;ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#92e69b44';ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(sweep)*R,cy+Math.sin(sweep)*R);ctx.stroke();ctx.restore();
   if(plane){ctx.save();plane.trail.forEach((p,i)=>{ctx.fillStyle=`rgba(174,236,158,${i/plane.trail.length*.45})`;ctx.fillRect(p.x*w-1,p.y*h-1,2,2)});const x=plane.x*w,y=plane.y*h;ctx.translate(x,y);ctx.rotate(rad(plane.h));ctx.shadowBlur=16;ctx.shadowColor='#c4ffb7';ctx.fillStyle='#d1ffbf';drawAircraftSymbol(plane.type.key);ctx.shadowBlur=0;ctx.restore();const drift=wind.y*h*12,arrowX=x-18,arrowY=y+drift;ctx.strokeStyle='#f1ab6b';ctx.fillStyle='#f1ab6b';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(arrowX,y);ctx.lineTo(arrowX,arrowY);ctx.stroke();ctx.beginPath();ctx.moveTo(arrowX,arrowY);ctx.lineTo(arrowX-4,arrowY-(drift<0?-6:6));ctx.lineTo(arrowX+4,arrowY-(drift<0?-6:6));ctx.closePath();ctx.fill();ctx.strokeStyle='#a6dba2';ctx.beginPath();ctx.moveTo(x+8,y-8);ctx.lineTo(x+21,y-21);ctx.lineTo(x+69,y-21);ctx.stroke();ctx.fillStyle='#d5f4cb';ctx.font='11px DM Mono, monospace';ctx.fillText(plane.call,x+24,y-26)}
+  ctx.restore();
   ui.radarState.textContent=`SCAN ${String(Math.floor(t/3600)%99).padStart(2,'0')}`;
 }
 function frame(t){const dt=Math.min((t-lastTime)/1000,.06);lastTime=t;update(dt,t);draw(t);if(t>messageUntil)ui.message.style.opacity='.35';if(playing)requestAnimationFrame(frame)}
@@ -210,6 +216,15 @@ function dialFromPointer(e){const r=ui.dial.getBoundingClientRect(),x=e.clientX-
 ui.dial.addEventListener('pointerdown',e=>{ui.dial.setPointerCapture(e.pointerId);dialFromPointer(e)});ui.dial.addEventListener('pointermove',e=>{if(ui.dial.hasPointerCapture(e.pointerId))dialFromPointer(e)});
 ui.dial.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowDown','ArrowRight','ArrowUp'].includes(e.key)){e.preventDefault();setSelected(selected+(e.key==='ArrowLeft'||e.key==='ArrowDown'?-5:5))}});
 $('minus').onclick=()=>setSelected(selected-5);$('plus').onclick=()=>setSelected(selected+5);
+$('radarZoomOut').onclick=()=>changeRadarZoom(1/1.2);
+$('radarZoomIn').onclick=()=>changeRadarZoom(1.2);
+$('radarReset').onclick=()=>{resetRadar();draw(performance.now())};
+let radarDrag=null;
+canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);radarDrag={id:e.pointerId,x:e.clientX,y:e.clientY}});
+canvas.addEventListener('pointermove',e=>{if(!radarDrag||radarDrag.id!==e.pointerId)return;camera.x-=(e.clientX-radarDrag.x)/(canvas.clientWidth*camera.zoom);camera.y-=(e.clientY-radarDrag.y)/(canvas.clientHeight*camera.zoom);radarDrag.x=e.clientX;radarDrag.y=e.clientY;draw(performance.now())});
+canvas.addEventListener('pointerup',e=>{if(radarDrag?.id===e.pointerId)radarDrag=null});
+canvas.addEventListener('pointercancel',e=>{if(radarDrag?.id===e.pointerId)radarDrag=null});
+canvas.addEventListener('wheel',e=>{e.preventDefault();changeRadarZoom(e.deltaY<0?1.1:1/1.1)},{passive:false});
 $('issue').onclick=()=>{
   if(!playing||!ui.overlay.hidden)return;
   const command={plane,heading:selected,sentAt:performance.now()};

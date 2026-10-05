@@ -6,6 +6,13 @@
   <meta name="theme-color" content="#071310">
   <title>GCA / FINAL APPROACH</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    #radar { touch-action: none; cursor: grab; }
+    #radar:active { cursor: grabbing; }
+    .radar-controls { position: absolute; z-index: 2; top: 34px; right: 12px; display: flex; gap: 4px; }
+    .radar-controls button { min-width: 30px; height: 28px; padding: 0 6px; border: 1px solid #527f59; border-radius: 3px; background: #10291de8; color: #c6e9c1; font: 600 10px 'DM Mono', monospace; }
+    .radar-controls button:focus-visible { outline: 2px solid #c5ffc2; outline-offset: 2px; }
+  </style>
 </head>
 <body>
   <main class="console">
@@ -22,8 +29,9 @@
     </section>
 
     <section class="radar-wrap" aria-label="レーダー画面">
-      <canvas id="radar" aria-label="航空機と滑走路のレーダー表示"></canvas>
+      <canvas id="radar" aria-label="航空機と滑走路のレーダー表示。ドラッグで表示位置を移動"></canvas>
       <div class="radar-top"><span>PRECISION APPROACH RADAR</span><span>RWY 09 <b>●</b></span></div>
+      <div class="radar-controls" aria-label="レーダー表示設定"><button id="radarZoomOut" type="button" aria-label="レーダーを縮小">−</button><button id="radarReset" type="button" aria-label="レーダー表示を自動調整">AUTO</button><button id="radarZoomIn" type="button" aria-label="レーダーを拡大">＋</button></div>
       <div class="loc-status" id="locStatus">LOC · ACQUIRE 0 / 7s</div>
       <div class="radar-bottom"><span id="wind">WIND CALM</span><span id="gateWidth">GATE 100%</span><span id="radarState">SCAN 01</span></div>
       <div class="message" id="message" aria-live="polite"><span class="message-kicker">GCA</span><span id="messageText">機体を滑走路へ誘導してください</span></div>
