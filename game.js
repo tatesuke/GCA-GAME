@@ -151,9 +151,12 @@ function updateLocalizer(dt){
   const onBroad=inFinal&&offset<broadLocalizerWidth();
   plane.locSeconds=onNarrow?plane.locSeconds+dt:0;
   const doubled=plane.locSeconds>=requiredLocSeconds;
-  if(onNarrow)score+=narrowPointsPerSecond*(doubled?2:1)*dt;
-  else if(onBroad)score+=broadPointsPerSecond*dt;
-  const state=!inFinal?'ACQUIRE':onNarrow?(doubled?'NARROW x2':'NARROW +20/s'):onBroad?'WIDE +6/s':'OFF PATH';
+  const speedFactor=plane.speed/aircraftTypes[2].speed;
+  const narrowRate=narrowPointsPerSecond*speedFactor;
+  const broadRate=broadPointsPerSecond*speedFactor;
+  if(onNarrow)score+=narrowRate*(doubled?2:1)*dt;
+  else if(onBroad)score+=broadRate*dt;
+  const state=!inFinal?'ACQUIRE':onNarrow?(doubled?`NARROW x2 +${(narrowRate*2).toFixed(1)}/s`:`NARROW +${narrowRate.toFixed(1)}/s`):onBroad?`WIDE +${broadRate.toFixed(1)}/s`:'OFF PATH';
   $('locStatus').textContent=`LOC · ${state} ${Math.min(requiredLocSeconds,plane.locSeconds).toFixed(1)} / ${requiredLocSeconds}s`;
   $('locStatus').classList.toggle('established',doubled);
 }
@@ -346,6 +349,6 @@ $('voiceButton').onclick=()=>{voiceEnabled=!voiceEnabled;$('voiceButton').textCo
 if(!voiceSupported){$('voiceButton').hidden=true;$('voiceButton').setAttribute('aria-pressed','false')}
 window.addEventListener('resize',()=>{resize();draw(performance.now())});
 // Keep the instructions tied to the current approach direction.
-$('helpButton').onclick=()=>modal('HOW TO PLAY','How to Play','Guide the aircraft to the runway.','1. Turn the dial to choose a heading, then send it.<br>2. Stay in the narrow green path for 20 points per second, or the wider amber path for 6 points per second.<br>3. Stay in the narrow path for 7 continuous seconds to double its points to 40 per second. Leaving the narrow path resets the streak.<br><br>Landing bonuses: up to 200 for touching down near the center, up to 160 for a steady final approach, and 40 for recovering from a large turn before final approach.<br><br>GO AROUND retries the same plane for a 100-point penalty. A sustained sharp turn on final approach costs 40 points. Score stops at zero. GO AROUNDS counts retries in this run; BEST is the highest final score when a run ends in a missed approach.','Back to Game →',()=>{ui.overlay.hidden=true;lastTime=performance.now()});
+$('helpButton').onclick=()=>modal('HOW TO PLAY','How to Play','Guide the aircraft to the runway.','1. Turn the dial to choose a heading, then send it.<br>2. Stay in the narrow green path for more points, or the wider amber path for fewer points. Rates scale with aircraft speed: initially about 12/s for a helicopter, 16/s for a light plane, and 20/s for a heavy plane in the narrow path.<br>3. Stay in the narrow path for 7 continuous seconds to double its rate. Leaving the narrow path resets the streak.<br><br>Landing bonuses: up to 200 for touching down near the center, up to 160 for a steady final approach, and 40 for recovering from a large turn before final approach.<br><br>GO AROUND retries the same plane for a 100-point penalty. A sustained sharp turn on final approach costs 40 points. Score stops at zero. GO AROUNDS counts retries in this run; BEST is the highest final score when a run ends in a missed approach.','Back to Game →',()=>{ui.overlay.hidden=true;lastTime=performance.now()});
 setSelected(90);renderScore();resize();draw(0);
-modal('BRIEFING','Start Control','You are the controller for the final approach. Give the aircraft a heading and guide it to the runway.','Score points while flying in the approach path: <strong>20/s</strong> in the narrow green path or <strong>6/s</strong> in the wider amber path. Stay in the narrow path for <strong>7 continuous seconds</strong> to earn double points there.<br>Turn the dial and tap Send Heading.','Start Control →',start);
+modal('BRIEFING','Start Control','You are the controller for the final approach. Give the aircraft a heading and guide it to the runway.','Score points while flying in the approach path. The narrow green path pays more than the wider amber path, with rates adjusted for aircraft speed. Stay in the narrow path for <strong>7 continuous seconds</strong> to earn double points there.<br>Turn the dial and tap Send Heading.','Start Control →',start);
