@@ -1,11 +1,19 @@
 <!doctype html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
   <meta name="theme-color" content="#071310">
   <title>GCA / FINAL APPROACH</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    #radar { touch-action: none; cursor: grab; }
+    #radar:active { cursor: grabbing; }
+    .radar-controls { position: absolute; z-index: 2; top: 34px; right: 12px; display: flex; gap: 4px; }
+    .radar-controls button { min-width: 30px; height: 28px; padding: 0 6px; border: 1px solid #527f59; border-radius: 3px; background: #10291de8; color: #c6e9c1; font: 600 10px 'DM Mono', monospace; }
+    .radar-controls button:focus-visible { outline: 2px solid #c5ffc2; outline-offset: 2px; }
+    .go-around { height: 26px; padding: 0 7px; border: 1px solid #71594a; border-radius: 3px; background: transparent; color: #b49a83; font: 600 9px 'DM Mono', monospace; letter-spacing: .04em; }
+  </style>
 </head>
 <body>
   <main class="console">
@@ -14,26 +22,27 @@
       <div class="top-right"><span class="live-dot"></span><span>RADAR ACTIVE</span><span class="clock" id="clock">00:00</span></div>
     </header>
 
-    <section class="status-strip" aria-label="飛行状況">
-      <div><span class="label">CALLSIGN</span><strong id="callsign">SIM 204</strong><span class="aircraft-type" id="aircraftType">機種 --</span></div>
+    <section class="status-strip" aria-label="Flight status">
+      <div><span class="label">CALLSIGN</span><strong id="callsign">SIM 204</strong><span class="aircraft-type" id="aircraftType">AIRCRAFT --</span></div>
       <div><span class="label">RANGE</span><strong><span id="range">--</span> <em>NM</em></strong></div>
       <div><span class="label">HEADING</span><strong><span id="heading">---</span><em>°</em></strong></div>
       <div><span class="label">SCORE</span><strong id="score">0000</strong></div>
     </section>
 
-    <section class="radar-wrap" aria-label="レーダー画面">
-      <canvas id="radar" aria-label="航空機と滑走路のレーダー表示"></canvas>
+    <section class="radar-wrap" aria-label="Radar screen">
+      <canvas id="radar" aria-label="Radar view of the aircraft and runway. Drag to move the view."></canvas>
       <div class="radar-top"><span>PRECISION APPROACH RADAR</span><span>RWY 09 <b>●</b></span></div>
+      <div class="radar-controls" aria-label="Radar view controls"><button id="radarZoomOut" type="button" aria-label="Zoom out">−</button><button id="radarReset" type="button" aria-label="Reset radar view">AUTO</button><button id="radarZoomIn" type="button" aria-label="Zoom in">＋</button></div>
       <div class="loc-status" id="locStatus">LOC · ACQUIRE 0 / 7s</div>
       <div class="radar-bottom"><span id="wind">WIND CALM</span><span id="gateWidth">GATE 100%</span><span id="radarState">SCAN 01</span></div>
-      <div class="message" id="message" aria-live="polite"><span class="message-kicker">GCA</span><span id="messageText">機体を滑走路へ誘導してください</span></div>
+      <div class="message" id="message" aria-live="polite"><span class="message-kicker">GCA</span><span id="messageText">Guide the aircraft to the runway.</span></div>
     </section>
 
     <section class="control-panel">
-      <div class="panel-heading"><div><span class="label">VECTOR CONTROL</span><h1>ヘディング指示</h1></div><span class="instruction">ダイヤルを回して針路を設定</span></div>
+      <div class="panel-heading"><div><span class="label">VECTOR CONTROL</span><h1>Heading Control</h1></div><span class="instruction">Turn the dial</span></div>
       <div class="control-content">
         <div class="dial-side">
-          <div class="dial" id="dial" role="slider" tabindex="0" aria-label="指示ヘディング" aria-valuemin="0" aria-valuemax="359" aria-valuenow="90">
+          <div class="dial" id="dial" role="slider" tabindex="0" aria-label="Selected heading" aria-valuemin="0" aria-valuemax="359" aria-valuenow="90">
             <div class="dial-ticks"></div><div class="dial-face"><span class="dial-n">N</span><span class="dial-e">E</span><span class="dial-s">S</span><span class="dial-w">W</span><span class="dial-pointer" id="dialPointer"></span><span class="dial-center"></span></div>
           </div>
           <div class="dial-hint">↻ DRAG TO TURN</div>
@@ -41,17 +50,17 @@
         <div class="command-side">
           <span class="label">SELECTED HEADING</span>
           <div class="selected"><span id="selectedHeading">090</span><sup>°</sup></div>
-          <div class="adjust"><button id="minus" aria-label="ヘディングを5度下げる">− 5°</button><button id="plus" aria-label="ヘディングを5度上げる">+ 5°</button></div>
-          <button class="issue" id="issue"><span>↗</span> 指示を送信 <small>TRANSMIT</small></button>
-          <p class="command-note" id="commandNote">機体は指示された針路へ旋回します</p>
+          <div class="adjust"><button id="minus" aria-label="Decrease heading by 5 degrees">− 5°</button><button id="plus" aria-label="Increase heading by 5 degrees">+ 5°</button></div>
+          <button class="issue" id="issue"><span>↗</span> Send Heading <small>TRANSMIT</small></button>
+          <p class="command-note" id="commandNote">The aircraft will turn to your heading.</p>
         </div>
       </div>
     </section>
 
-    <footer><span>GCA / SIMULATION MODE</span><button id="voiceButton" aria-pressed="true">VOICE ON</button><button id="helpButton">遊び方 <span>?</span></button></footer>
+    <footer><button class="go-around" id="goAround" type="button">↻ GO AROUND</button><button id="voiceButton" aria-pressed="true">VOICE ON</button><button id="helpButton">Help <span>?</span></button></footer>
   </main>
 
-  <div class="overlay" id="overlay" hidden><div class="modal"><span class="label" id="modalKicker">BRIEFING</span><h2 id="modalTitle">管制を開始</h2><p id="modalText"></p><div class="modal-info" id="modalInfo"></div><button id="modalButton">管制を開始 <span>→</span></button></div></div>
+  <div class="overlay" id="overlay" hidden><div class="modal"><span class="label" id="modalKicker">BRIEFING</span><h2 id="modalTitle">Start Control</h2><p id="modalText"></p><div class="modal-info" id="modalInfo"></div><button id="modalButton">Start Control <span>→</span></button></div></div>
   <script src="game.js"></script>
 </body>
 </html>
