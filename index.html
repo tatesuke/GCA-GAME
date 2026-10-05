@@ -12,6 +12,8 @@
     .radar-controls { position: absolute; z-index: 2; top: 34px; right: 12px; display: flex; gap: 4px; }
     .radar-controls button { min-width: 30px; height: 28px; padding: 0 6px; border: 1px solid #527f59; border-radius: 3px; background: #10291de8; color: #c6e9c1; font: 600 10px 'DM Mono', monospace; }
     .radar-controls button:focus-visible { outline: 2px solid #c5ffc2; outline-offset: 2px; }
+    .penalty-toast { position: absolute; z-index: 2; top: 71px; right: 12px; padding: 5px 8px; border: 1px solid #c77868; border-radius: 3px; background: #351b19e8; color: #ffd1c4; font: 600 10px 'DM Mono', monospace; letter-spacing: .04em; pointer-events: none; opacity: 0; transform: translateY(-4px); transition: opacity .18s, transform .18s; }
+    .penalty-toast.show { opacity: 1; transform: translateY(0); }
     .go-around { height: 26px; padding: 0 7px; border: 1px solid #71594a; border-radius: 3px; background: transparent; color: #b49a83; font: 600 9px 'DM Mono', monospace; letter-spacing: .04em; }
     @media (min-width: 960px) {
       .console { width: min(100%, 1140px); display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(390px, .9fr); grid-template-rows: auto auto 1fr auto; column-gap: 28px; }
@@ -32,7 +34,7 @@
     </header>
 
     <section class="status-strip" aria-label="Flight status">
-      <div><span class="label">CALLSIGN</span><strong id="callsign">SIM 204</strong><span class="aircraft-type" id="aircraftType">AIRCRAFT --</span></div>
+      <div><span class="label">CALLSIGN</span><strong id="callsign">SIM 204</strong><span class="aircraft-type" id="aircraftType">AIRCRAFT --</span><span class="aircraft-type">GO AROUNDS <span id="goAroundCount">0</span></span></div>
       <div><span class="label">RANGE</span><strong><span id="range">--</span> <em>NM</em></strong></div>
       <div><span class="label">HEADING</span><strong><span id="heading">---</span><em>°</em></strong></div>
       <div><span class="label">SCORE</span><strong id="score">0000</strong><span class="aircraft-type">BEST <span id="maxScore">0000</span></span></div>
@@ -42,6 +44,7 @@
       <canvas id="radar" aria-label="Radar view of the aircraft and runway. Drag to move the view."></canvas>
       <div class="radar-top"><span>PRECISION APPROACH RADAR</span><span>RWY 09 <b>●</b></span></div>
       <div class="radar-controls" aria-label="Radar view controls"><button id="radarZoomOut" type="button" aria-label="Zoom out">−</button><button id="radarReset" type="button" aria-label="Reset radar view">AUTO</button><button id="radarZoomIn" type="button" aria-label="Zoom in">＋</button></div>
+      <div class="penalty-toast" id="penaltyToast" role="status" aria-live="polite"></div>
       <div class="loc-status" id="locStatus">LOC · ACQUIRE 0.0 / 7s</div>
       <div class="radar-bottom"><span id="wind">WIND CALM</span><span id="gateWidth">GATE 100%</span><span id="radarState">SCAN 01</span></div>
       <div class="message" id="message" aria-live="polite"><span class="message-kicker">GCA</span><span id="messageText">Guide the aircraft to the runway.</span></div>
