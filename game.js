@@ -99,6 +99,7 @@ function releaseHeading(command){
   if(wait>0){setTimeout(()=>releaseHeading(command),wait);return}
   plane.target=command.heading;
   plane.pendingHeading=null;
+  $('issue').classList.remove('transmitting');
   ui.note.textContent=`EXECUTING HEADING ${fmt(command.heading)}°`;
 }
 function courseAdvisory(){
@@ -160,10 +161,17 @@ function updateLocalizer(dt){
   $('locStatus').textContent=`LOC · ${state} ${Math.min(requiredLocSeconds,plane.locSeconds).toFixed(1)} / ${requiredLocSeconds}s`;
   $('locStatus').classList.toggle('established',doubled);
 }
-function modal(kicker,title,text,info,button,action){ui.modalKicker.textContent=kicker;ui.modalTitle.textContent=title;ui.modalText.textContent=text;ui.modalInfo.innerHTML=info;ui.modalButton.textContent=button;ui.modalButton.onclick=action;ui.overlay.hidden=false}
+function modal(kicker,title,text,info,button,action){ui.modalKicker.textContent=kicker;ui.modalTitle.textContent=title;ui.modalText.textContent=text;ui.modalInfo.innerHTML=info;ui.modalButton.textContent=button;ui.modalButton.onclick=action;ui.overlay.querySelector('.modal').classList.toggle('missed',kicker==='MISSED APPROACH');$('modalSound').hidden=kicker!=='BRIEFING'||!voiceSupported;$('shareScore').hidden=kicker!=='MISSED APPROACH';$('shareScore').textContent='Share Score ↗';ui.overlay.hidden=false}
+$('shareScore').onclick=async()=>{
+  const text=`GCAで${Math.floor(score)}点とりました！`;
+  if(navigator.share){try{await navigator.share({text});return}catch(error){if(error.name==='AbortError')return}}
+  try{await navigator.clipboard.writeText(text);$('shareScore').textContent='Copied ✓'}
+  catch{window.prompt('Copy this text to share your score',text)}
+};
 function newPlane(retry=false){
   const previous=retry?plane:null;
   clearRadio();
+  $('issue').classList.remove('transmitting');
   if(!retry)runway.heading=Math.floor(Math.random()*72)*5;
   resetRadar();
   document.querySelector('.radar-top span:last-child').textContent=`RWY ${String(Math.round(runway.heading/10)%36).padStart(2,'0')} ◆`;
@@ -205,6 +213,7 @@ function goAround(){
 function start(){score=0;goArounds=0;renderScore();landings=0;misses=0;nextCallsign=0;elapsed=0;$('clock').textContent='00:00';ui.overlay.hidden=true;playing=true;newPlane();lastTime=performance.now();requestAnimationFrame(frame)}
 function end(success,reason='MISSED APPROACH.'){
   playing=false;
+  $('issue').classList.remove('transmitting');
   const bonus=success?landingBonuses(coursePosition(plane.x,plane.y)):null;
   if(bonus)score+=bonus.center+bonus.steady+bonus.stunt;
   if(!success&&Math.floor(score)>maxScore){maxScore=Math.floor(score);saveMaxScore()}
@@ -320,7 +329,9 @@ function draw(t){const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)retu
 }
 function frame(t){const dt=Math.min((t-lastTime)/1000,.06);lastTime=t;update(dt,t);draw(t);if(t>messageUntil)ui.message.style.opacity='.35';if(playing)requestAnimationFrame(frame)}
 function dialFromPointer(e){const r=ui.dial.getBoundingClientRect(),x=e.clientX-r.left-r.width/2,y=e.clientY-r.top-r.height/2;setSelected(Math.atan2(x,-y)*180/Math.PI)}
-ui.dial.addEventListener('pointerdown',e=>{ui.dial.setPointerCapture(e.pointerId);dialFromPointer(e)});ui.dial.addEventListener('pointermove',e=>{if(ui.dial.hasPointerCapture(e.pointerId))dialFromPointer(e)});
+ui.dial.addEventListener('pointerdown',e=>{if(e.target.closest('#resetHeading'))return;ui.dial.setPointerCapture(e.pointerId);dialFromPointer(e)});ui.dial.addEventListener('pointermove',e=>{if(ui.dial.hasPointerCapture(e.pointerId))dialFromPointer(e)});
+$('resetHeading').addEventListener('pointerdown',e=>e.stopPropagation());
+$('resetHeading').onclick=()=>{if(plane)setSelected(plane.pendingHeading?.heading??plane.target)};
 ui.dial.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowDown','ArrowRight','ArrowUp'].includes(e.key)){e.preventDefault();setSelected(selected+(e.key==='ArrowLeft'||e.key==='ArrowDown'?-5:5))}});
 $('minus').onclick=()=>setSelected(selected-5);$('plus').onclick=()=>setSelected(selected+5);
 $('radarZoomOut').onclick=()=>changeRadarZoom(1/1.2);
@@ -337,6 +348,9 @@ $('issue').onclick=()=>{
   if(!playing||!ui.overlay.hidden)return;
   const command={plane,heading:selected,sentAt:performance.now()};
   plane.pendingHeading=command;plane.lastCommandAt=command.sentAt;
+  $('issue').classList.remove('transmitting');
+  void $('issue').offsetWidth;
+  $('issue').classList.add('transmitting');
   const turn=((selected-plane.h+540)%360)-180;
   const direction=turn<0?'LEFT':'RIGHT';
   const instruction=Math.abs(turn)<2?`MAINTAIN HEADING ${fmt(selected)}`:`TURN ${direction} HEADING ${fmt(selected)}`;
@@ -345,7 +359,7 @@ $('issue').onclick=()=>{
   const voiced=showMessage(`${instruction}.`,3,spoken,()=>releaseHeading(command),()=>{if(plane===command.plane&&plane.pendingHeading===command)ui.note.textContent=`TRANSMITTING: ${radioHeading(command.heading)}`},'heading');
   if(!voiced)setTimeout(()=>releaseHeading(command),1800);
 };
-$('voiceButton').onclick=()=>{voiceEnabled=!voiceEnabled;$('voiceButton').textContent=voiceEnabled?'VOICE ON':'VOICE OFF';$('voiceButton').setAttribute('aria-pressed',String(voiceEnabled));if(!voiceEnabled)clearRadio(true)};
+$('voiceButton').onclick=$('modalVoiceButton').onclick=()=>{voiceEnabled=!voiceEnabled;$('voiceButton').textContent=voiceEnabled?'VOICE ON':'VOICE OFF';$('voiceButton').setAttribute('aria-pressed',String(voiceEnabled));$('modalVoiceButton').textContent=voiceEnabled?'ON':'OFF';$('modalVoiceButton').setAttribute('aria-pressed',String(voiceEnabled));if(!voiceEnabled)clearRadio(true)};
 if(!voiceSupported){$('voiceButton').hidden=true;$('voiceButton').setAttribute('aria-pressed','false')}
 window.addEventListener('resize',()=>{resize();draw(performance.now())});
 // Keep the instructions tied to the current approach direction.
