@@ -78,15 +78,18 @@ function releaseHeading(command){
 }
 function courseAdvisory(){
   const offset=coursePosition(plane.x,plane.y).side,absolute=Math.abs(offset);
-  let phrase;
-  if(absolute<localizerWidth())phrase='ON COURSE.';
+  let course;
+  if(absolute<localizerWidth())course='ON COURSE';
   else{
     const side=offset<0?'LEFT':'RIGHT';
-    const degree=absolute>runway.halfWidth*1.5?'WELL':'SLIGHTLY';
+    const degree=absolute>runway.halfWidth*1.5?'':'SLIGHTLY ';
     const correcting=plane.lastCourseAbs!==null&&absolute<plane.lastCourseAbs-.006;
-    phrase=`${degree} ${side} OF COURSE${correcting?' AND CORRECTING':''}.`;
+    const diverging=plane.lastCourseAbs!==null&&absolute>plane.lastCourseAbs+.006;
+    course=diverging?`GOING ${side} OF COURSE`: `${degree}${side} OF COURSE${correcting?' AND CORRECTING':''}`;
   }
   plane.lastCourseAbs=absolute;
+  const miles=Math.max(0,Math.round(-coursePosition(plane.x,plane.y).along*22*2)/2);
+  const phrase=`${miles} MILES FROM TOUCHDOWN, ${course}.`;
   showMessage(phrase,5,phrase,undefined,undefined,'course');
 }
 function localizerWidth(){return Math.max(.018,runway.halfWidth*.7)}
@@ -151,7 +154,7 @@ function end(success,reason='MISSED APPROACH.'){
   playing=false;
   plane.pendingHeading=null;
   clearRadio();
-  if(success){landings++;const locBonus=Math.round(Math.min(plane.locSeconds,25)*10),points=Math.max(100,500-Math.round(plane.trail.length*.7))+locBonus;score+=points;showMessage('OVER LANDING THRESHOLD. TOUCHDOWN.',10);setTimeout(()=>{if(!playing)modal('TOUCHDOWN','着陸成功',`${plane.call} を滑走路へ安全に誘導しました。` ,`コース維持 <strong>${plane.locSeconds.toFixed(1)}秒</strong>　ボーナス <strong>+${locBonus}</strong><br>獲得スコア <strong>${String(score).padStart(4,'0')}</strong>　着陸機数 <strong>${landings}</strong>`,`次の機体 →`,()=>{ui.overlay.hidden=true;playing=true;newPlane();lastTime=performance.now();requestAnimationFrame(frame)})},650)}
+  if(success){landings++;const locBonus=Math.round(Math.min(plane.locSeconds,25)*10),points=Math.max(100,500-Math.round(plane.trail.length*.7))+locBonus;score+=points;showMessage('GUIDANCE LIMIT. TAKE OVER VISUALLY.',10);setTimeout(()=>{if(!playing)modal('TOUCHDOWN','着陸成功',`${plane.call} を滑走路へ安全に誘導しました。` ,`コース維持 <strong>${plane.locSeconds.toFixed(1)}秒</strong>　ボーナス <strong>+${locBonus}</strong><br>獲得スコア <strong>${String(score).padStart(4,'0')}</strong>　着陸機数 <strong>${landings}</strong>`,`次の機体 →`,()=>{ui.overlay.hidden=true;playing=true;newPlane();lastTime=performance.now();requestAnimationFrame(frame)})},650)}
   else{misses++;showMessage(reason,10);setTimeout(()=>{if(!playing)modal('MISSED APPROACH','進入失敗',reason==='LOCALIZER NOT ESTABLISHED.'?'進入コースを十分に維持できませんでした。センターライン上を7秒間飛行してください。':`${plane.call} が管制空域を離れました。もう一度誘導に挑戦してください。`,`累計スコア <strong>${String(score).padStart(4,'0')}</strong>　着陸機数 <strong>${landings}</strong>`,`やり直す →`,start)},650)}
 }
 function update(dt,t){
@@ -229,9 +232,12 @@ $('issue').onclick=()=>{
   if(!playing||!ui.overlay.hidden)return;
   const command={plane,heading:selected,sentAt:performance.now()};
   plane.pendingHeading=command;plane.lastCommandAt=command.sentAt;
-  const spoken=`HEADING ${radioHeading(selected)}.`;
+  const turn=((selected-plane.h+540)%360)-180;
+  const direction=turn<0?'LEFT':'RIGHT';
+  const instruction=Math.abs(turn)<2?`MAINTAIN HEADING ${fmt(selected)}`:`TURN ${direction} HEADING ${fmt(selected)}`;
+  const spoken=Math.abs(turn)<2?`MAINTAIN HEADING ${radioHeading(selected)}.`:`TURN ${direction} HEADING ${radioHeading(selected)}.`;
   ui.note.textContent=`QUEUED: ${radioHeading(selected)}`;
-  const voiced=showMessage(`HEADING ${fmt(selected)}.`,3,spoken,()=>releaseHeading(command),()=>{if(plane===command.plane&&plane.pendingHeading===command)ui.note.textContent=`TRANSMITTING: ${radioHeading(command.heading)}`},'heading');
+  const voiced=showMessage(`${instruction}.`,3,spoken,()=>releaseHeading(command),()=>{if(plane===command.plane&&plane.pendingHeading===command)ui.note.textContent=`TRANSMITTING: ${radioHeading(command.heading)}`},'heading');
   if(!voiced)setTimeout(()=>releaseHeading(command),1800);
 };
 $('voiceButton').onclick=()=>{voiceEnabled=!voiceEnabled;$('voiceButton').textContent=voiceEnabled?'VOICE ON':'VOICE OFF';$('voiceButton').setAttribute('aria-pressed',String(voiceEnabled));if(!voiceEnabled)clearRadio(true)};
