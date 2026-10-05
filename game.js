@@ -1,13 +1,24 @@
 const canvas = document.getElementById('radar');
 const ctx = canvas.getContext('2d');
 const $ = id => document.getElementById(id);
-const ui = {callsign:$('callsign'),range:$('range'),heading:$('heading'),score:$('score'),selected:$('selectedHeading'),pointer:$('dialPointer'),dial:$('dial'),message:$('message'),messageText:$('messageText'),note:$('commandNote'),overlay:$('overlay'),modalKicker:$('modalKicker'),modalTitle:$('modalTitle'),modalText:$('modalText'),modalInfo:$('modalInfo'),modalButton:$('modalButton'),radarState:$('radarState')};
+const ui = {callsign:$('callsign'),range:$('range'),heading:$('heading'),score:$('score'),maxScore:$('maxScore'),selected:$('selectedHeading'),pointer:$('dialPointer'),dial:$('dial'),message:$('message'),messageText:$('messageText'),note:$('commandNote'),overlay:$('overlay'),modalKicker:$('modalKicker'),modalTitle:$('modalTitle'),modalText:$('modalText'),modalInfo:$('modalInfo'),modalButton:$('modalButton'),radarState:$('radarState')};
 const runway = {x:.5,y:.5,heading:90,halfWidth:.047};
 const camera = {x:.5,y:.5,zoom:1.3};
 const approachStartDistance=.98,finalCourseLength=.85,rangeScale=10;
 const wind = {cross:0,base:0,target:0,max:0,knots:0,nextShift:0,lastDisplay:0};
 const requiredLocSeconds=7;
+const narrowPointsPerSecond=20,broadPointsPerSecond=6;
 let selected = 90, plane, score = 0, landings = 0, misses = 0, playing = false, lastTime = 0, sweep = 0, messageUntil = 0, nextCallsign = 0, elapsed = 0;
+const maxScoreKey='gca.maxScore';
+let maxScore=0;
+try{const saved=Number(localStorage.getItem(maxScoreKey));if(Number.isSafeInteger(saved)&&saved>0)maxScore=saved}catch{}
+function renderScore(){
+  const current=Math.floor(score);
+  if(current>maxScore){maxScore=current;saveMaxScore()}
+  ui.score.textContent=String(current).padStart(4,'0');
+  ui.maxScore.textContent=String(maxScore).padStart(4,'0');
+}
+function saveMaxScore(){try{localStorage.setItem(maxScoreKey,String(maxScore))}catch{}}
 const voiceSupported='speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
 let voiceEnabled=voiceSupported;
 let activeRadio=null,radioQueue=[];
@@ -96,6 +107,7 @@ function courseAdvisory(){
   showMessage(phrase,5,phrase,undefined,undefined,'course');
 }
 function localizerWidth(){return Math.max(.018,runway.halfWidth*.7)}
+function broadLocalizerWidth(){return localizerWidth()*1.8}
 function updateWindDisplay(){
   wind.knots=Math.round(Math.abs(wind.cross)/.00045);
   $('wind').textContent=wind.knots>=2?`DRIFT ${wind.cross<0?'LEFT':'RIGHT'} ${String(wind.knots).padStart(2,'0')} KT`:'DRIFT VARIABLE';
@@ -115,12 +127,16 @@ function updateWind(dt,t){
 function updateLocalizer(dt){
   const position=coursePosition(plane.x,plane.y);
   const inFinal=position.along>=-finalCourseLength&&position.along<-.02;
-  const onCenter=Math.abs(position.side)<localizerWidth();
-  const aligned=headingError(plane.h)<35;
-  if(inFinal&&onCenter&&aligned)plane.locSeconds+=dt;
-  const state=plane.locSeconds>=requiredLocSeconds?'ESTABLISHED':!inFinal?'ACQUIRE':onCenter&&!aligned?'ALIGN HEADING':onCenter?'ON COURSE':'CORRECT COURSE';
+  const offset=Math.abs(position.side);
+  const onNarrow=inFinal&&offset<localizerWidth();
+  const onBroad=inFinal&&offset<broadLocalizerWidth();
+  plane.locSeconds=onNarrow?plane.locSeconds+dt:0;
+  const doubled=plane.locSeconds>=requiredLocSeconds;
+  if(onNarrow)score+=narrowPointsPerSecond*(doubled?2:1)*dt;
+  else if(onBroad)score+=broadPointsPerSecond*dt;
+  const state=!inFinal?'ACQUIRE':onNarrow?(doubled?'NARROW x2':'NARROW +20/s'):onBroad?'WIDE +6/s':'OFF PATH';
   $('locStatus').textContent=`LOC · ${state} ${Math.min(requiredLocSeconds,plane.locSeconds).toFixed(1)} / ${requiredLocSeconds}s`;
-  $('locStatus').classList.toggle('established',plane.locSeconds>=requiredLocSeconds);
+  $('locStatus').classList.toggle('established',doubled);
 }
 function modal(kicker,title,text,info,button,action){ui.modalKicker.textContent=kicker;ui.modalTitle.textContent=title;ui.modalText.textContent=text;ui.modalInfo.innerHTML=info;ui.modalButton.textContent=button;ui.modalButton.onclick=action;ui.overlay.hidden=false}
 function newPlane(retry=false){
@@ -160,13 +176,15 @@ function goAround(){
   newPlane(true);
   lastTime=performance.now();
 }
-function start(){score=0;landings=0;misses=0;nextCallsign=0;elapsed=0;$('clock').textContent='00:00';ui.overlay.hidden=true;playing=true;newPlane();lastTime=performance.now();requestAnimationFrame(frame)}
+function start(){score=0;renderScore();landings=0;misses=0;nextCallsign=0;elapsed=0;$('clock').textContent='00:00';ui.overlay.hidden=true;playing=true;newPlane();lastTime=performance.now();requestAnimationFrame(frame)}
 function end(success,reason='MISSED APPROACH.'){
   playing=false;
+  renderScore();
+  saveMaxScore();
   plane.pendingHeading=null;
   clearRadio();
-  if(success){landings++;const locBonus=Math.round(Math.min(plane.locSeconds,25)*10),points=Math.max(100,500-Math.round(plane.trail.length*.7))+locBonus;score+=points;showMessage('GUIDANCE LIMIT. TAKE OVER VISUALLY.',10);setTimeout(()=>{if(!playing)modal('TOUCHDOWN','Safe Landing',`You guided ${plane.call} to the runway.`,`On course: <strong>${plane.locSeconds.toFixed(1)} seconds</strong> | Bonus: <strong>+${locBonus}</strong><br>Score: <strong>${String(score).padStart(4,'0')}</strong> | Landings: <strong>${landings}</strong>`,'Next Plane →',()=>{ui.overlay.hidden=true;playing=true;newPlane();lastTime=performance.now();requestAnimationFrame(frame)})},650)}
-  else{misses++;showMessage(reason,10);setTimeout(()=>{if(!playing)modal('MISSED APPROACH','Approach Missed',reason==='LOCALIZER NOT ESTABLISHED.'?'Stay on the center line for a total of 7 seconds before reaching the runway.':`${plane.call} left the control area. Try guiding the plane again.`,`Score: <strong>${String(score).padStart(4,'0')}</strong> | Landings: <strong>${landings}</strong>`,'Try Again →',start)},650)}
+  if(success){landings++;showMessage('GUIDANCE LIMIT. TAKE OVER VISUALLY.',10);setTimeout(()=>{if(!playing)modal('TOUCHDOWN','Safe Landing',`You guided ${plane.call} to the runway.`,`Score: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | Landings: <strong>${landings}</strong>`,'Next Plane →',()=>{ui.overlay.hidden=true;playing=true;newPlane();lastTime=performance.now();requestAnimationFrame(frame)})},650)}
+  else{misses++;showMessage(reason,10);setTimeout(()=>{if(!playing)modal('MISSED APPROACH','Approach Missed',`${plane.call} left the control area. Try guiding the plane again.`,`Score: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | Landings: <strong>${landings}</strong>`,'Try Again →',start)},650)}
 }
 function update(dt,t){
   if(!plane||!playing||!ui.overlay.hidden)return;
@@ -185,11 +203,11 @@ function update(dt,t){
   const position=coursePosition(plane.x,plane.y);
   if(position.along>=-.02){
     const onRunway=position.along<.016&&Math.abs(position.side)<runway.halfWidth&&headingError(plane.h)<27;
-    end(onRunway&&plane.locSeconds>=requiredLocSeconds,onRunway?'LOCALIZER NOT ESTABLISHED.':'MISSED APPROACH.');return;
+    end(onRunway,'MISSED APPROACH.');return;
   }
   if(position.along<-approachStartDistance-.2||Math.abs(position.side)>.65){end(false);return}
   if(!plane.pendingHeading&&activeRadio?.kind!=='course'&&!radioQueue.some(entry=>entry.kind==='course')&&position.along>-approachStartDistance+.03&&t-plane.lastCourseCall>=4000&&t-plane.lastCommandAt>=2500){courseAdvisory();plane.lastCourseCall=t}
-  ui.range.textContent=(dist*rangeScale).toFixed(1);ui.heading.textContent=fmt(plane.h);ui.callsign.textContent=plane.call;ui.score.textContent=String(score).padStart(4,'0');
+  ui.range.textContent=(dist*rangeScale).toFixed(1);ui.heading.textContent=fmt(plane.h);ui.callsign.textContent=plane.call;renderScore();
 }
 function resize(){const r=canvas.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(r.width*d);canvas.height=Math.round(r.height*d);ctx.setTransform(d,0,0,d,0,0)}
 function resetRadar(){const center=coursePoint(-approachStartDistance/2);camera.x=center.x;camera.y=center.y;camera.zoom=.72}
@@ -214,6 +232,9 @@ function draw(t){const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)retu
   ctx.strokeStyle='#244a31';ctx.beginPath();ctx.moveTo(cx-R-25,cy);ctx.lineTo(cx+R+25,cy);ctx.moveTo(cx,cy-R-25);ctx.lineTo(cx,cy+R+25);ctx.stroke();
   const pixel=(along,side=0)=>{const p=coursePoint(along,side);return {x:p.x*w,y:p.y*h}};
   const path=(points,close=false)=>{ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));if(close)ctx.closePath()};
+  const broad=broadLocalizerWidth(),outerA=pixel(-finalCourseLength,-broad),outerB=pixel(0,-broad),outerC=pixel(0,broad),outerD=pixel(-finalCourseLength,broad);
+  ctx.fillStyle='#d9a36f10';path([outerA,outerB,outerC,outerD],true);ctx.fill();
+  ctx.setLineDash([2,7]);ctx.strokeStyle='#a7835b';path([outerA,outerB]);ctx.stroke();path([outerC,outerD]);ctx.stroke();ctx.setLineDash([]);
   const half=localizerWidth(),a=pixel(-finalCourseLength,-half),b=pixel(0,-half),c=pixel(0,half),d=pixel(-finalCourseLength,half);
   ctx.fillStyle='#84d58a12';path([a,b,c,d],true);ctx.fill();
   ctx.setLineDash([3,6]);ctx.strokeStyle='#527f59';path([a,b]);ctx.stroke();path([c,d]);ctx.stroke();
@@ -268,7 +289,8 @@ $('issue').onclick=()=>{
 $('voiceButton').onclick=()=>{voiceEnabled=!voiceEnabled;$('voiceButton').textContent=voiceEnabled?'VOICE ON':'VOICE OFF';$('voiceButton').setAttribute('aria-pressed',String(voiceEnabled));if(!voiceEnabled)clearRadio(true)};
 if(!voiceSupported){$('voiceButton').hidden=true;$('voiceButton').setAttribute('aria-pressed','false')}
 window.addEventListener('resize',()=>{resize();draw(performance.now())});
+window.addEventListener('pagehide',saveMaxScore);
 // Keep the instructions tied to the current approach direction.
-$('helpButton').onclick=()=>modal('HOW TO PLAY','How to Play','Guide the aircraft to the runway.','1. Turn the dial to choose a heading, then send it.<br>2. Guide the plane into the dotted approach path.<br>3. Keep it in the path for a total of 7 seconds before it reaches the runway.<br><br>The approach direction changes each round. Check FINAL COURSE on the radar. GCA will tell you when the plane moves off course.<br><br>If the approach goes wrong, tap GO AROUND to try again with the same plane and runway.','Back to Game →',()=>{ui.overlay.hidden=true;lastTime=performance.now()});
-setSelected(90);resize();draw(0);
-modal('BRIEFING','Start Control','You are the controller for the final approach. Give the aircraft a heading and guide it to the runway.','Keep the plane inside the dotted approach path for a total of <strong>7 seconds</strong>, then guide it to the runway. The approach direction changes each round.<br>Turn the dial and tap Send Heading.','Start Control →',start);
+$('helpButton').onclick=()=>modal('HOW TO PLAY','How to Play','Guide the aircraft to the runway.','1. Turn the dial to choose a heading, then send it.<br>2. Stay in the narrow green path for 20 points per second, or the wider amber path for 6 points per second.<br>3. Stay in the narrow path for 7 continuous seconds to double its points to 40 per second. Leaving the narrow path resets the streak.<br><br>Reach the runway aligned to land. The approach direction changes each round. Check FINAL COURSE on the radar.<br><br>If the approach goes wrong, tap GO AROUND to try again with the same plane and runway.','Back to Game →',()=>{ui.overlay.hidden=true;lastTime=performance.now()});
+setSelected(90);renderScore();resize();draw(0);
+modal('BRIEFING','Start Control','You are the controller for the final approach. Give the aircraft a heading and guide it to the runway.','Score points while flying in the approach path: <strong>20/s</strong> in the narrow green path or <strong>6/s</strong> in the wider amber path. Stay in the narrow path for <strong>7 continuous seconds</strong> to earn double points there.<br>Turn the dial and tap Send Heading.','Start Control →',start);
