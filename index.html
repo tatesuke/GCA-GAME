@@ -13,6 +13,15 @@
     .radar-controls button { min-width: 30px; height: 28px; padding: 0 6px; border: 1px solid #527f59; border-radius: 3px; background: #10291de8; color: #c6e9c1; font: 600 10px 'DM Mono', monospace; }
     .radar-controls button:focus-visible { outline: 2px solid #c5ffc2; outline-offset: 2px; }
     .go-around { height: 26px; padding: 0 7px; border: 1px solid #71594a; border-radius: 3px; background: transparent; color: #b49a83; font: 600 9px 'DM Mono', monospace; letter-spacing: .04em; }
+    @media (min-width: 960px) {
+      .console { width: min(100%, 1140px); display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(390px, .9fr); grid-template-rows: auto auto 1fr auto; column-gap: 28px; }
+      .topbar, .status-strip, footer { grid-column: 1 / -1; }
+      .radar-wrap { grid-column: 1; grid-row: 3; align-self: start; aspect-ratio: 1.14 / 1; }
+      .control-panel { grid-column: 2; grid-row: 3; align-self: start; min-width: 0; }
+      .control-content { grid-template-columns: 44% 56%; }
+      .dial { width: min(15vw, 170px); height: min(15vw, 170px); }
+      .issue small { display: none; }
+    }
   </style>
 </head>
 <body>
