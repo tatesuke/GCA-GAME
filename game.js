@@ -106,8 +106,8 @@ function courseAdvisory(){
   if(distanceCall)plane.nextDistanceCall-=2;
   showMessage(phrase,5,phrase,undefined,undefined,'course');
 }
-function localizerWidth(){return Math.max(.018,runway.halfWidth*.7)}
-function broadLocalizerWidth(){return localizerWidth()*1.8}
+function localizerWidth(){return Math.max(.018,runway.halfWidth*.65)}
+function broadLocalizerWidth(){return Math.max(.018,runway.halfWidth*.7)*1.8}
 function updateWindDisplay(){
   wind.knots=Math.round(Math.abs(wind.cross)/.00045);
   $('wind').textContent=wind.knots>=2?`DRIFT ${wind.cross<0?'LEFT':'RIGHT'} ${String(wind.knots).padStart(2,'0')} KT`:'DRIFT VARIABLE';
