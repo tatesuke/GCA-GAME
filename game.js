@@ -108,15 +108,17 @@ function courseAdvisory(){
   if(absolute<localizerWidth())course='ON COURSE';
   else{
     const side=offset<0?'LEFT':'RIGHT';
-    const degree=absolute>runway.halfWidth*1.5?'WELL ':'SLIGHTLY ';
-    const correcting=plane.lastCourseAbs!==null&&absolute<plane.lastCourseAbs-.006;
+    const degree=absolute>runway.halfWidth*1.5?'WELL ':absolute<runway.halfWidth?'SLIGHTLY ':'';
+    const correction=plane.lastCourseAbs===null?0:plane.lastCourseAbs-absolute;
+    const correcting=correction>.006;
     const diverging=plane.lastCourseAbs!==null&&absolute>plane.lastCourseAbs+.006;
-    course=diverging?`GOING ${degree}${side} OF COURSE`: `${degree}${side} OF COURSE${correcting?' AND CORRECTING':''}`;
+    const correctionRate=correction/Math.max((performance.now()-plane.lastCourseCall)/1000,1);
+    course=`${degree}${side} OF COURSE${diverging?`, GOING ${side}`:correcting?correctionRate<.003?', CORRECTING SLOWLY':', CORRECTING':''}`;
   }
   plane.lastCourseAbs=absolute;
   const miles=Math.max(0,-coursePosition(plane.x,plane.y).along*rangeScale);
   const distanceCall=plane.nextDistanceCall>=2&&miles<=plane.nextDistanceCall;
-  const phrase=distanceCall?`${plane.nextDistanceCall} MILES FROM TOUCHDOWN, ${course}.`:`${course}.`;
+  const phrase=distanceCall?`${plane.nextDistanceCall} MILES FROM RUNWAY, ${course}.`:`${course}.`;
   if(distanceCall)plane.nextDistanceCall-=2;
   showMessage(phrase,5,phrase,undefined,undefined,'course');
 }
