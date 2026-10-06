@@ -12,8 +12,8 @@ const dialogCopy={
     ja:['ブリーフィング','管制開始','あなたは最終進入の管制官です。航空機に方位を指示し、滑走路まで誘導してください。','進入経路内を飛ぶと得点が入ります。狭い緑の経路は広い琥珀色の経路より高得点で、得点率は機体の速度に応じて変わります。緑の経路に<strong>連続7秒間</strong>とどまると、そこでの得点が2倍になります。<br>ダイヤルを回して「Send Heading」を押してください。','管制開始 →']
   },
   help:{
-    en:['HOW TO PLAY','How to Play','Guide the aircraft to the runway.','1. Turn the dial to choose a heading, then send it. Use the 5-degree buttons for small changes; RESET restores the instructed heading.<br>2. Stay in the narrow green path for more points, or the wider amber path for fewer points. Rates scale with aircraft speed: initially about 12/s for a helicopter, 16/s for a light plane, and 20/s for a heavy plane in the narrow path.<br>3. Stay in the narrow path for 7 continuous seconds to double its rate. Leaving the narrow path resets the streak.<br><br>Landing bonuses: up to 200 for touching down near the center, up to 160 for a steady final approach, and 40 for recovering from a large turn before final approach.<br><br>GO AROUND retries the same plane for a 100-point penalty. A sustained sharp turn on final approach costs 40 points. Score stops at zero. LANDINGS counts successful approaches in this run; BEST is the highest final score when a run ends in a missed approach.','Back to Game →'],
-    ja:['遊び方','遊び方','航空機を滑走路まで誘導してください。','1. ダイヤルで方位を選び、Send Headingで指示します。5度ボタンで微調整できます。RESETで現在指示している方位に戻せます。<br>2. 狭い緑の経路では高得点、広い琥珀色の経路では低めの得点が入ります。得点率は機体の速度に応じて変わり、緑の経路では当初、ヘリコプターが約12点/秒、軽飛行機が約16点/秒、大型機が約20点/秒です。<br>3. 緑の経路に連続7秒間とどまると得点率が2倍になります。経路を外れると連続時間はリセットされます。<br><br>着陸ボーナス：中心付近への着陸で最大200点、安定した最終進入で最大160点、最終進入前の大きな旋回から立て直すと40点。<br><br>GO AROUNDは100点を消費して同じ機体でやり直します。最終進入中に急旋回を続けると40点減点されます。得点は0点未満になりません。LANDINGSは今回成功した着陸数、BESTはミストアプローチで終了した時点の最高得点です。','ゲームに戻る →']
+    en:['HOW TO PLAY','How to Play','Guide the aircraft to the runway.','1. Turn the dial to choose a heading, then send it. Use the 5-degree buttons for small changes; RESET restores the instructed heading.<br>2. Stay in the narrow green path for more points, or the wider amber path for fewer points. Rates scale with aircraft speed: initially about 12/s for a helicopter, 15/s for a light plane, 19/s for a heavy plane, 22/s for a business jet, and 25/s for a fighter jet in the narrow path.<br>3. Stay in the narrow path for 7 continuous seconds to double its rate. Leaving the narrow path resets the streak.<br><br>Landing bonuses: up to 200 for touching down near the center, up to 160 for a steady final approach, and 40 for recovering from a large turn before final approach.<br><br>GO AROUND retries the same plane for a 100-point penalty. A sustained sharp turn on final approach costs 40 points. Score stops at zero. LANDINGS counts successful approaches in this run; BEST is the highest final score when a run ends in a missed approach.','Back to Game →'],
+    ja:['遊び方','遊び方','航空機を滑走路まで誘導してください。','1. ダイヤルで方位を選び、Send Headingで指示します。5度ボタンで微調整できます。RESETで現在指示している方位に戻せます。<br>2. 狭い緑の経路では高得点、広い琥珀色の経路では低めの得点が入ります。得点率は機体の速度に応じて変わり、緑の経路では当初、ヘリコプターが約12点/秒、軽飛行機が約15点/秒、大型機が約19点/秒、ビジネスジェットが約22点/秒、戦闘機が約25点/秒です。<br>3. 緑の経路に連続7秒間とどまると得点率が2倍になります。経路を外れると連続時間はリセットされます。<br><br>着陸ボーナス：中心付近への着陸で最大200点、安定した最終進入で最大160点、最終進入前の大きな旋回から立て直すと40点。<br><br>GO AROUNDは100点を消費して同じ機体でやり直します。最終進入中に急旋回を続けると40点減点されます。得点は0点未満になりません。LANDINGSは今回成功した着陸数、BESTはミストアプローチで終了した時点の最高得点です。','ゲームに戻る →']
   },
   landing:{
     en:['TOUCHDOWN','Safe Landing',call=>`You guided ${call} to the runway.`,b=>`Center: <strong>+${b.center}</strong> | Straight: <strong>+${b.steady}</strong> | Stunt: <strong>+${b.stunt}</strong><br>Score: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | Landings: <strong>${landings}</strong> | Go-arounds: <strong>${goArounds}</strong>`,'Next Plane →'],
@@ -40,6 +40,7 @@ const approachStartDistance=.98,finalCourseLength=.85,rangeScale=10;
 const wind = {cross:0,base:0,target:0,max:0,knots:0,nextShift:0,lastDisplay:0};
 const requiredLocSeconds=7;
 const narrowPointsPerSecond=20,broadPointsPerSecond=6;
+const scoringReferenceSpeed=.024;
 const goAroundPenalty=100,sharpTurnPenalty=40;
 let selected = 90, plane, score = 0, landings = 0, misses = 0, goArounds = 0, playing = false, lastTime = 0, sweep = 0, messageUntil = 0, nextCallsign = 0, elapsed = 0;
 const maxScoreKey='gca.bestCompletedRun';
@@ -76,9 +77,11 @@ let voiceEnabled=voiceSupported;
 let activeRadio=null,radioQueue=[];
 const callsigns = ['SIM 204','SIM 731','SIM 118','SIM 562','SIM 426','SIM 083','SIM 319'];
 const aircraftTypes = [
-  {key:'helicopter',name:'Helicopter',speed:.014,turnRate:62,traits:'Slow / Quick turns'},
-  {key:'light',name:'Light plane',speed:.019,turnRate:38,traits:'Medium speed / Normal turns'},
-  {key:'heavy',name:'Heavy plane',speed:.024,turnRate:23,traits:'Fast / Slow turns'}
+  {key:'helicopter',name:'Helicopter',speed:.0145,turnRate:64,traits:'Slow / Quick turns'},
+  {key:'light',name:'Light plane',speed:.0185,turnRate:40,traits:'Moderate speed / Responsive turns'},
+  {key:'heavy',name:'Heavy plane',speed:.023,turnRate:25,traits:'Fast / Wide turns'},
+  {key:'business',name:'Business jet',speed:.026,turnRate:34,traits:'Very fast / Moderate turns'},
+  {key:'fighter',name:'Fighter jet',speed:.0295,turnRate:72,traits:'Fastest / Agile turns'}
 ];
 const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const norm = a=>(a%360+360)%360;
@@ -195,7 +198,7 @@ function updateLocalizer(dt){
   const onBroad=inFinal&&offset<broadLocalizerWidth();
   plane.locSeconds=onNarrow?plane.locSeconds+dt:0;
   const doubled=plane.locSeconds>=requiredLocSeconds;
-  const speedFactor=plane.speed/aircraftTypes[2].speed;
+  const speedFactor=plane.speed/scoringReferenceSpeed;
   const narrowRate=narrowPointsPerSecond*speedFactor;
   const broadRate=broadPointsPerSecond*speedFactor;
   if(onNarrow)score+=narrowRate*(doubled?2:1)*dt;
@@ -331,6 +334,10 @@ function drawAircraftSymbol(type){
     ctx.moveTo(0,6);ctx.lineTo(0,10);
   }else if(type==='heavy'){
     ctx.moveTo(0,-11);ctx.lineTo(2,-2);ctx.lineTo(10,4);ctx.lineTo(10,7);ctx.lineTo(2,5);ctx.lineTo(2,10);ctx.lineTo(-2,10);ctx.lineTo(-2,5);ctx.lineTo(-10,7);ctx.lineTo(-10,4);ctx.lineTo(-2,-2);ctx.closePath();
+  }else if(type==='business'){
+    ctx.moveTo(0,-10);ctx.lineTo(2,-2);ctx.lineTo(8,4);ctx.lineTo(8,6);ctx.lineTo(2,4);ctx.lineTo(2,9);ctx.lineTo(-2,9);ctx.lineTo(-2,4);ctx.lineTo(-8,6);ctx.lineTo(-8,4);ctx.lineTo(-2,-2);ctx.closePath();
+  }else if(type==='fighter'){
+    ctx.moveTo(0,-11);ctx.lineTo(2,-4);ctx.lineTo(9,5);ctx.lineTo(9,8);ctx.lineTo(2,5);ctx.lineTo(2,9);ctx.lineTo(-2,9);ctx.lineTo(-2,5);ctx.lineTo(-9,8);ctx.lineTo(-9,5);ctx.lineTo(-2,-4);ctx.closePath();
   }else{
     ctx.moveTo(0,-9);ctx.lineTo(5,6);ctx.lineTo(0,3);ctx.lineTo(-5,6);ctx.closePath();
   }
