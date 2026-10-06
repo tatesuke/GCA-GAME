@@ -31,8 +31,8 @@
     .penalty-toast { position: absolute; z-index: 2; top: 71px; right: 12px; padding: 5px 8px; border: 1px solid #c77868; border-radius: 3px; background: #351b19e8; color: #ffd1c4; font: 600 10px 'DM Mono', monospace; letter-spacing: .04em; pointer-events: none; opacity: 0; transform: translateY(-4px); transition: opacity .18s, transform .18s; }
     .penalty-toast.show { opacity: 1; transform: translateY(0); }
     .go-around { height: 26px; padding: 0 7px; border: 1px solid #71594a; border-radius: 3px; background: transparent; color: #b49a83; font: 600 9px 'DM Mono', monospace; letter-spacing: .04em; }
-    @media (min-width: 960px) {
-      .console { width: min(100%, 1140px); display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(390px, .9fr); grid-template-rows: auto auto 1fr auto; column-gap: 28px; }
+    @media (min-width: 800px) {
+      .console { width: min(100%, 1140px); display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(320px, .9fr); grid-template-rows: auto auto 1fr auto; column-gap: 20px; }
       .topbar, .status-strip, footer { grid-column: 1 / -1; }
       .radar-wrap { grid-column: 1; grid-row: 3; align-self: start; aspect-ratio: 1.14 / 1; }
       .control-panel { grid-column: 2; grid-row: 3; align-self: start; min-width: 0; }
