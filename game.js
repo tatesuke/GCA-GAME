@@ -94,13 +94,15 @@ function showMessage(t,seconds=4,spoken=t,onFinished,onStart,kind='general'){
   return true;
 }
 function releaseHeading(command){
-  if(!playing||plane!==command.plane||plane.pendingHeading!==command)return;
+  if(!playing||plane!==command.plane||(!command.started&&plane.pendingHeading!==command))return;
   const wait=command.sentAt+1200-performance.now();
   if(wait>0){setTimeout(()=>releaseHeading(command),wait);return}
   plane.target=command.heading;
-  plane.pendingHeading=null;
-  $('issue').classList.remove('transmitting');
-  ui.note.textContent=`EXECUTING HEADING ${fmt(command.heading)}°`;
+  if(plane.pendingHeading===command){
+    plane.pendingHeading=null;
+    $('issue').classList.remove('transmitting');
+    ui.note.textContent=`EXECUTING HEADING ${fmt(command.heading)}°`;
+  }
 }
 function courseAdvisory(){
   const offset=coursePosition(plane.x,plane.y).side,absolute=Math.abs(offset);
@@ -352,7 +354,7 @@ canvas.addEventListener('pointercancel',e=>{if(radarDrag?.id===e.pointerId)radar
 canvas.addEventListener('wheel',e=>{e.preventDefault();changeRadarZoom(e.deltaY<0?1.1:1/1.1)},{passive:false});
 $('issue').onclick=()=>{
   if(!playing||!ui.overlay.hidden)return;
-  const command={plane,heading:selected,sentAt:performance.now()};
+  const command={plane,heading:selected,sentAt:performance.now(),started:false};
   plane.pendingHeading=command;plane.lastCommandAt=command.sentAt;
   $('issue').classList.remove('transmitting');
   void $('issue').offsetWidth;
@@ -362,7 +364,7 @@ $('issue').onclick=()=>{
   const instruction=Math.abs(turn)<2?`MAINTAIN HEADING ${fmt(selected)}`:`TURN ${direction} HEADING ${fmt(selected)}`;
   const spoken=Math.abs(turn)<2?`MAINTAIN HEADING ${radioHeading(selected)}.`:`TURN ${direction} HEADING ${radioHeading(selected)}.`;
   ui.note.textContent=`QUEUED: ${radioHeading(selected)}`;
-  const voiced=showMessage(`${instruction}.`,3,spoken,()=>releaseHeading(command),()=>{if(plane===command.plane&&plane.pendingHeading===command)ui.note.textContent=`TRANSMITTING: ${radioHeading(command.heading)}`},'heading');
+  const voiced=showMessage(`${instruction}.`,3,spoken,()=>releaseHeading(command),()=>{command.started=true;if(plane===command.plane&&plane.pendingHeading===command)ui.note.textContent=`TRANSMITTING: ${radioHeading(command.heading)}`},'heading');
   if(!voiced)setTimeout(()=>releaseHeading(command),1800);
 };
 $('voiceButton').onclick=$('modalVoiceButton').onclick=()=>{voiceEnabled=!voiceEnabled;$('voiceButton').textContent=voiceEnabled?'VOICE ON':'VOICE OFF';$('voiceButton').setAttribute('aria-pressed',String(voiceEnabled));$('modalVoiceButton').textContent=voiceEnabled?'ON':'OFF';$('modalVoiceButton').setAttribute('aria-pressed',String(voiceEnabled));if(!voiceEnabled)clearRadio(true)};
