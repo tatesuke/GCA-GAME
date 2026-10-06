@@ -163,7 +163,7 @@ function updateLocalizer(dt){
 }
 function modal(kicker,title,text,info,button,action){ui.modalKicker.textContent=kicker;ui.modalTitle.textContent=title;ui.modalText.textContent=text;ui.modalInfo.innerHTML=info;ui.modalButton.textContent=button;ui.modalButton.onclick=action;ui.overlay.querySelector('.modal').classList.toggle('missed',kicker==='MISSED APPROACH');$('modalSound').hidden=kicker!=='BRIEFING'||!voiceSupported;$('shareScore').hidden=kicker!=='MISSED APPROACH';$('shareScore').textContent='Share Score ↗';ui.overlay.hidden=false}
 $('shareScore').onclick=async()=>{
-  const text=`TinyGCAで${Math.floor(score)}点とりました！`;
+  const text=`I scored ${Math.floor(score)} in TinyGCA.\nhttps://tatesuke.github.io/TinyGCA/`;
   if(navigator.share){try{await navigator.share({text});return}catch(error){if(error.name==='AbortError')return}}
   try{await navigator.clipboard.writeText(text);$('shareScore').textContent='Copied ✓'}
   catch{window.prompt('Copy this text to share your score',text)}
