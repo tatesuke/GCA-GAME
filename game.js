@@ -334,6 +334,10 @@ $('resetHeading').addEventListener('pointerdown',e=>e.stopPropagation());
 $('resetHeading').onclick=()=>{if(plane)setSelected(plane.pendingHeading?.heading??plane.target)};
 ui.dial.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowDown','ArrowRight','ArrowUp'].includes(e.key)){e.preventDefault();setSelected(selected+(e.key==='ArrowLeft'||e.key==='ArrowDown'?-5:5))}});
 $('minus').onclick=()=>setSelected(selected-5);$('plus').onclick=()=>setSelected(selected+5);
+$('swapControls').onclick=()=>{
+  const swapped=$('controlContent').classList.toggle('swapped');
+  $('swapControls').setAttribute('aria-pressed',String(swapped));
+};
 $('radarZoomOut').onclick=()=>changeRadarZoom(1/1.2);
 $('radarZoomIn').onclick=()=>changeRadarZoom(1.2);
 $('radarReset').onclick=()=>{resetRadar();draw(performance.now())};
