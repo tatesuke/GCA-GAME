@@ -294,35 +294,39 @@ function drawAircraftSymbol(type){
   if(type==='helicopter'){ctx.strokeStyle='#d1ffbf';ctx.lineWidth=2;ctx.stroke()}else ctx.fill();
 }
 function draw(t){const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;ctx.clearRect(0,0,w,h);ctx.fillStyle='#07170e';ctx.fillRect(0,0,w,h);
-  ctx.save();ctx.translate(w/2,h/2);ctx.scale(camera.zoom,camera.zoom);ctx.translate(-camera.x*w,-camera.y*h);
+  const capture=document.body.classList.contains('og-capture');
+  const lineScale=capture?1.6:1;
+  const radarLineScale=capture?2.8:1;
+  ctx.save();ctx.lineCap=radarLineScale>1?'round':'butt';ctx.translate(w/2,h/2);ctx.scale(camera.zoom,camera.zoom);ctx.translate(-camera.x*w,-camera.y*h);
   const cx=runway.x*w,cy=runway.y*h,R=Math.min(w,h)*.43;
-  ctx.save();ctx.strokeStyle='#315d3a';ctx.lineWidth=1;for(let i=1;i<=4;i++){ctx.beginPath();ctx.arc(cx,cy,R*i/4,0,Math.PI*2);ctx.stroke()}
-  ctx.strokeStyle='#244a31';ctx.beginPath();ctx.moveTo(cx-R-25,cy);ctx.lineTo(cx+R+25,cy);ctx.moveTo(cx,cy-R-25);ctx.lineTo(cx,cy+R+25);ctx.stroke();
+  ctx.save();ctx.strokeStyle=capture?'#5a9565':'#315d3a';ctx.lineWidth=radarLineScale;for(let i=1;i<=4;i++){ctx.beginPath();ctx.arc(cx,cy,R*i/4,0,Math.PI*2);ctx.stroke()}
+  ctx.strokeStyle=capture?'#437d50':'#244a31';ctx.beginPath();ctx.moveTo(cx-R-25,cy);ctx.lineTo(cx+R+25,cy);ctx.moveTo(cx,cy-R-25);ctx.lineTo(cx,cy+R+25);ctx.stroke();
   const pixel=(along,side=0)=>{const p=coursePoint(along,side);return {x:p.x*w,y:p.y*h}};
   const path=(points,close=false)=>{ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));if(close)ctx.closePath()};
   const broad=broadLocalizerWidth(),outerA=pixel(-finalCourseLength,-broad),outerB=pixel(0,-broad),outerC=pixel(0,broad),outerD=pixel(-finalCourseLength,broad);
   ctx.fillStyle='#d9a36f10';path([outerA,outerB,outerC,outerD],true);ctx.fill();
-  ctx.setLineDash([2,7]);ctx.strokeStyle='#a7835b';path([outerA,outerB]);ctx.stroke();path([outerC,outerD]);ctx.stroke();ctx.setLineDash([]);
+  ctx.setLineDash([2*lineScale,7*lineScale]);ctx.strokeStyle=capture?'#cba878':'#a7835b';ctx.lineWidth=radarLineScale;path([outerA,outerB]);ctx.stroke();path([outerC,outerD]);ctx.stroke();ctx.setLineDash([]);
   const half=localizerWidth(),a=pixel(-finalCourseLength,-half),b=pixel(0,-half),c=pixel(0,half),d=pixel(-finalCourseLength,half);
   ctx.fillStyle='#84d58a12';path([a,b,c,d],true);ctx.fill();
-  ctx.setLineDash([3,6]);ctx.strokeStyle='#527f59';path([a,b]);ctx.stroke();path([c,d]);ctx.stroke();
-  ctx.setLineDash([4,6]);ctx.strokeStyle='#73af79';path([pixel(-finalCourseLength),pixel(0)]);ctx.stroke();ctx.setLineDash([]);
+  ctx.setLineDash([3*lineScale,6*lineScale]);ctx.strokeStyle=capture?'#83c38b':'#527f59';path([a,b]);ctx.stroke();path([c,d]);ctx.stroke();
+  ctx.setLineDash([4*lineScale,6*lineScale]);ctx.strokeStyle=capture?'#b0f4b2':'#73af79';path([pixel(-finalCourseLength),pixel(0)]);ctx.stroke();ctx.setLineDash([]);
   const label=pixel(-finalCourseLength+.01,-half-.025);ctx.fillStyle='#8cb593';ctx.font='10px DM Mono, monospace';ctx.fillText(`FINAL COURSE ${fmt(runway.heading)}°`,label.x,label.y);
-  const gateA=pixel(0,-runway.halfWidth),gateB=pixel(0,runway.halfWidth);ctx.strokeStyle='#d3f7bb';ctx.lineWidth=5;path([gateA,gateB]);ctx.stroke();ctx.lineWidth=1;
+  const gateA=pixel(0,-runway.halfWidth),gateB=pixel(0,runway.halfWidth);ctx.strokeStyle='#d3f7bb';ctx.lineWidth=5*lineScale;path([gateA,gateB]);ctx.stroke();ctx.lineWidth=lineScale;
   const runwayLabel=pixel(.02,-runway.halfWidth);ctx.fillStyle='#a2d89a';ctx.fillText(`RWY ${String(Math.round(runway.heading/10)%36).padStart(2,'0')}`,runwayLabel.x,runwayLabel.y);
   sweep=(t*.00035)%(Math.PI*2);const grad=ctx.createConicGradient(sweep,cx,cy);grad.addColorStop(0,'#9df6a900');grad.addColorStop(.94,'#9df6a900');grad.addColorStop(1,'#9df6a924');ctx.fillStyle=grad;ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#92e69b44';ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(sweep)*R,cy+Math.sin(sweep)*R);ctx.stroke();ctx.restore();
   if(plane){
     ctx.save();
-    plane.trail.forEach((p,i)=>{ctx.fillStyle=`rgba(174,236,158,${i/plane.trail.length*.45})`;ctx.fillRect(p.x*w-1,p.y*h-1,2,2)});
+    const dotSize=radarLineScale>1?4:2;
+    plane.trail.forEach((p,i)=>{ctx.fillStyle=`rgba(174,236,158,${i/plane.trail.length*.45})`;ctx.fillRect(p.x*w-dotSize/2,p.y*h-dotSize/2,dotSize,dotSize)});
     const x=plane.x*w,y=plane.y*h;
-    ctx.translate(x,y);ctx.rotate(rad(plane.h));ctx.shadowBlur=16;ctx.shadowColor='#c4ffb7';ctx.fillStyle='#d1ffbf';drawAircraftSymbol(plane.type.key);ctx.shadowBlur=0;ctx.restore();
+    ctx.translate(x,y);ctx.rotate(rad(plane.h));if(capture)ctx.scale(2.3,2.3);ctx.shadowBlur=16;ctx.shadowColor='#c4ffb7';ctx.fillStyle='#d1ffbf';drawAircraftSymbol(plane.type.key);ctx.shadowBlur=0;ctx.restore();
     const arrowX=x-18,arrowY=y;
     const driftX=Math.cos(rad(runway.heading))*wind.cross*w*12,driftY=Math.sin(rad(runway.heading))*wind.cross*h*12;
     const tipX=arrowX+driftX,tipY=arrowY+driftY,angle=Math.atan2(driftY,driftX);
-    ctx.strokeStyle='#f1ab6b';ctx.fillStyle='#f1ab6b';ctx.lineWidth=2;
+    ctx.strokeStyle='#f1ab6b';ctx.fillStyle='#f1ab6b';ctx.lineWidth=2*lineScale;
     ctx.beginPath();ctx.moveTo(arrowX,arrowY);ctx.lineTo(tipX,tipY);ctx.stroke();
     ctx.beginPath();ctx.moveTo(tipX,tipY);ctx.lineTo(tipX-7*Math.cos(angle-.5),tipY-7*Math.sin(angle-.5));ctx.lineTo(tipX-7*Math.cos(angle+.5),tipY-7*Math.sin(angle+.5));ctx.closePath();ctx.fill();
-    ctx.strokeStyle='#a6dba2';ctx.beginPath();ctx.moveTo(x+8,y-8);ctx.lineTo(x+21,y-21);ctx.lineTo(x+69,y-21);ctx.stroke();ctx.fillStyle='#d5f4cb';ctx.font='11px DM Mono, monospace';ctx.fillText(plane.call,x+24,y-26);
+    ctx.strokeStyle='#a6dba2';ctx.lineWidth=lineScale;ctx.beginPath();ctx.moveTo(x+8,y-8);ctx.lineTo(x+21,y-21);ctx.lineTo(x+69,y-21);ctx.stroke();ctx.fillStyle='#d5f4cb';ctx.font='11px DM Mono, monospace';ctx.fillText(plane.call,x+24,y-26);
   }
   ctx.restore();
   ui.radarState.textContent=`SCAN ${String(Math.floor(t/3600)%99).padStart(2,'0')}`;
@@ -369,4 +373,20 @@ window.addEventListener('resize',()=>{resize();draw(performance.now())});
 // Keep the instructions tied to the current approach direction.
 $('helpButton').onclick=()=>modal('HOW TO PLAY','How to Play','Guide the aircraft to the runway.','1. Turn the dial to choose a heading, then send it. Use the 5-degree buttons for small changes; RESET restores the instructed heading.<br>2. Stay in the narrow green path for more points, or the wider amber path for fewer points. Rates scale with aircraft speed: initially about 12/s for a helicopter, 16/s for a light plane, and 20/s for a heavy plane in the narrow path.<br>3. Stay in the narrow path for 7 continuous seconds to double its rate. Leaving the narrow path resets the streak.<br><br>Landing bonuses: up to 200 for touching down near the center, up to 160 for a steady final approach, and 40 for recovering from a large turn before final approach.<br><br>GO AROUND retries the same plane for a 100-point penalty. A sustained sharp turn on final approach costs 40 points. Score stops at zero. LANDINGS counts successful approaches in this run; BEST is the highest final score when a run ends in a missed approach.','Back to Game →',()=>{ui.overlay.hidden=true;lastTime=performance.now()});
 setSelected(90);renderScore();resize();draw(0);
-modal('BRIEFING','Start Control','You are the controller for the final approach. Give the aircraft a heading and guide it to the runway.','Score points while flying in the approach path. The narrow green path pays more than the wider amber path, with rates adjusted for aircraft speed. Stay in the narrow path for <strong>7 continuous seconds</strong> to earn double points there.<br>Turn the dial and tap Send Heading.','Start Control →',start);
+if(new URLSearchParams(location.search).has('og-capture')){
+  document.body.classList.add('og-capture');
+  runway.heading=75;
+  runway.halfWidth=.03;
+  const position=coursePoint(-.48,-.028);
+  plane={...position,h:85,type:aircraftTypes[1],call:'SIM 204',trail:[-.68,-.64,-.6,-.56,-.52].map((along,i)=>coursePoint(along,-.043+i*.003))};
+  camera.x=.28;camera.y=.68;camera.zoom=1.05;
+  document.querySelector('.radar-top span:last-child').textContent=`RWY ${String(Math.round(runway.heading/10)%36).padStart(2,'0')} ◆`;
+  setSelected(80);
+  ui.messageText.textContent='SIM 204, SLIGHTLY LEFT OF COURSE AND CORRECTING.';
+  ui.range.textContent='4.8';ui.heading.textContent=fmt(plane.h);
+  $('aircraftType').textContent=plane.type.name;
+  $('gateWidth').textContent=`GATE ${Math.round(runway.halfWidth/.047*100)}%`;
+  resize();draw(0);
+}else{
+  modal('BRIEFING','Start Control','You are the controller for the final approach. Give the aircraft a heading and guide it to the runway.','Score points while flying in the approach path. The narrow green path pays more than the wider amber path, with rates adjusted for aircraft speed. Stay in the narrow path for <strong>7 continuous seconds</strong> to earn double points there.<br>Turn the dial and tap Send Heading.','Start Control →',start);
+}

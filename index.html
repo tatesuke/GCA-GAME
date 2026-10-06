@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
   <meta name="theme-color" content="#071310">
   <title>TinyGCA / FINAL APPROACH</title>
+  <meta name="description" content="Guide aircraft to the runway in TinyGCA, a compact radar approach game. Set headings, stay on course, and land safely.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="TinyGCA / FINAL APPROACH">
+  <meta property="og:description" content="Guide aircraft to the runway in a compact radar approach game. Set headings, stay on course, and land safely.">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="TinyGCA / FINAL APPROACH">
+  <meta name="twitter:description" content="Guide aircraft to the runway in a compact radar approach game. Set headings, stay on course, and land safely.">
   <link rel="stylesheet" href="style.css">
   <style>
     #radar { touch-action: none; cursor: grab; }
@@ -24,6 +31,17 @@
       .dial { width: min(15vw, 170px); height: min(15vw, 170px); }
       .issue small { display: none; }
     }
+    body.og-capture { min-width: 0; height: 100vh; overflow: hidden; }
+    .og-capture .console { display: grid; width: 100%; height: 100%; min-height: 0; padding: 20px; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); grid-template-rows: 72px auto 1fr 48px; column-gap: 24px; }
+    .og-capture .topbar, .og-capture .status-strip, .og-capture footer { grid-column: 2; }
+    .og-capture .topbar { grid-row: 1; }
+    .og-capture .status-strip { grid-row: 2; }
+    .og-capture .control-panel { display: block; grid-column: 2; grid-row: 3; align-self: center; padding-top: 0; min-width: 0; }
+    .og-capture footer { grid-row: 4; }
+    .og-capture .radar-wrap { grid-column: 1; grid-row: 1 / 5; width: 100%; height: 100%; margin: 0; box-shadow: inset 0 0 35px #0a2b1a, 0 0 0 4px #0a1c15; aspect-ratio: auto; }
+    .og-capture .radar-controls, .og-capture .overlay { display: none; }
+    .og-capture .control-content { grid-template-columns: 44% 56%; }
+    .og-capture .dial { width: min(15vw, 170px); height: min(15vw, 170px); }
   </style>
 </head>
 <body>

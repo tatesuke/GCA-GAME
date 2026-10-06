@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>TinyGCA — OG image capture</title>
+  <style>
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #07170e; }
+    iframe { display: block; width: 1200px; height: 630px; border: 0; }
+  </style>
+</head>
+<body>
+  <!-- Capture this page at a 1200 × 630 viewport. The frame uses the actual game renderer. -->
+  <iframe id="capture" title="TinyGCA radar capture"></iframe>
+  <script>
+    document.getElementById('capture').src = location.protocol === 'file:'
+      ? 'index.html?og-capture=1'
+      : '/?og-capture=1';
+  </script>
+</body>
+</html>
