@@ -1,7 +1,7 @@
 const canvas = document.getElementById('radar');
 const ctx = canvas.getContext('2d');
 const $ = id => document.getElementById(id);
-const ui = {callsign:$('callsign'),range:$('range'),heading:$('heading'),score:$('score'),maxScore:$('maxScore'),landingCount:$('landingCount'),selected:$('selectedHeading'),pointer:$('dialPointer'),dial:$('dial'),message:$('message'),messageText:$('messageText'),note:$('commandNote'),overlay:$('overlay'),modalKicker:$('modalKicker'),modalTitle:$('modalTitle'),modalText:$('modalText'),modalInfo:$('modalInfo'),modalButton:$('modalButton'),radarState:$('radarState')};
+const ui = {callsign:$('callsign'),range:$('range'),heading:$('heading'),score:$('score'),maxScore:$('maxScore'),landingCount:$('landingCount'),maxLandings:$('maxLandings'),selected:$('selectedHeading'),pointer:$('dialPointer'),dial:$('dial'),message:$('message'),messageText:$('messageText'),note:$('commandNote'),overlay:$('overlay'),modalKicker:$('modalKicker'),modalTitle:$('modalTitle'),modalText:$('modalText'),modalInfo:$('modalInfo'),modalButton:$('modalButton'),radarState:$('radarState')};
 const runway = {x:.5,y:.5,heading:90,halfWidth:.047};
 const camera = {x:.5,y:.5,zoom:1.3};
 const approachStartDistance=.98,finalCourseLength=.85,rangeScale=10;
@@ -11,19 +11,26 @@ const narrowPointsPerSecond=20,broadPointsPerSecond=6;
 const goAroundPenalty=100,sharpTurnPenalty=40;
 let selected = 90, plane, score = 0, landings = 0, misses = 0, goArounds = 0, playing = false, lastTime = 0, sweep = 0, messageUntil = 0, nextCallsign = 0, elapsed = 0;
 const maxScoreKey='gca.bestCompletedRun';
-let maxScore=0;
+const maxLandingsKey='gca.bestLandings';
+let maxScore=0,maxLandings=0;
 try{
   const saved=JSON.parse(localStorage.getItem(maxScoreKey));
   const previousScore=typeof saved==='object'&&saved!==null?saved.score:saved;
   if(Number.isSafeInteger(previousScore)&&previousScore>=0)maxScore=previousScore;
+}catch{}
+try{
+  const saved=Number(localStorage.getItem(maxLandingsKey));
+  if(Number.isSafeInteger(saved)&&saved>=0)maxLandings=saved;
 }catch{}
 function renderScore(){
   const current=Math.floor(score);
   ui.score.textContent=String(current).padStart(4,'0');
   ui.maxScore.textContent=String(maxScore).padStart(4,'0');
   ui.landingCount.textContent=String(landings);
+  ui.maxLandings.textContent=String(maxLandings);
 }
 function saveMaxScore(){try{localStorage.setItem(maxScoreKey,String(maxScore))}catch{}}
+function saveMaxLandings(){try{localStorage.setItem(maxLandingsKey,String(maxLandings))}catch{}}
 let penaltyToastTimer;
 function showPenalty(text){
   const toast=$('penaltyToast');
@@ -165,9 +172,9 @@ function updateLocalizer(dt){
   $('locStatus').textContent=`LOC · ${state} ${Math.min(requiredLocSeconds,plane.locSeconds).toFixed(1)} / ${requiredLocSeconds}s`;
   $('locStatus').classList.toggle('established',doubled);
 }
-function modal(kicker,title,text,info,button,action){ui.modalKicker.textContent=kicker;ui.modalTitle.textContent=title;ui.modalText.textContent=text;ui.modalInfo.innerHTML=info;ui.modalButton.textContent=button;ui.modalButton.onclick=action;ui.overlay.querySelector('.modal').classList.toggle('missed',kicker==='MISSED APPROACH');$('modalSound').hidden=kicker!=='BRIEFING'||!voiceSupported;$('shareScore').hidden=kicker!=='MISSED APPROACH';$('shareScore').textContent='Share Score ↗';ui.overlay.hidden=false}
+function modal(kicker,title,text,info,button,action){ui.modalKicker.textContent=kicker;ui.modalTitle.textContent=title;ui.modalText.textContent=text;ui.modalInfo.innerHTML=info;ui.modalButton.textContent=button;ui.modalButton.onclick=action;ui.overlay.querySelector('.modal').classList.toggle('missed',kicker==='MISSED APPROACH');$('modalSound').hidden=kicker!=='BRIEFING'||!voiceSupported;$('shareScore').hidden=kicker!=='MISSED APPROACH'&&kicker!=='TOUCHDOWN';$('shareScore').textContent='Share Result ↗';ui.overlay.hidden=false}
 $('shareScore').onclick=async()=>{
-  const text=`I scored ${Math.floor(score)} in TinyGCA.\nhttps://tatesuke.github.io/TinyGCA/`;
+  const text=`TinyGCA: ${landings} landings, ${Math.floor(score)} points.\nhttps://tatesuke.github.io/TinyGCA/`;
   if(navigator.share){try{await navigator.share({text});return}catch(error){if(error.name==='AbortError')return}}
   try{await navigator.clipboard.writeText(text);$('shareScore').textContent='Copied ✓'}
   catch{window.prompt('Copy this text to share your score',text)}
@@ -224,8 +231,8 @@ function end(success,reason='MISSED APPROACH.'){
   renderScore();
   plane.pendingHeading=null;
   clearRadio();
-  if(success){landings++;renderScore();showMessage('GUIDANCE LIMIT. TAKE OVER VISUALLY.',10);setTimeout(()=>{if(!playing)modal('TOUCHDOWN','Safe Landing',`You guided ${plane.call} to the runway.`,`Center: <strong>+${bonus.center}</strong> | Straight: <strong>+${bonus.steady}</strong> | Stunt: <strong>+${bonus.stunt}</strong><br>Score: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | Landings: <strong>${landings}</strong> | Go-arounds: <strong>${goArounds}</strong>`,'Next Plane →',()=>{ui.overlay.hidden=true;playing=true;newPlane();lastTime=performance.now();requestAnimationFrame(frame)})},650)}
-  else{misses++;showMessage(reason,10);setTimeout(()=>{if(!playing)modal('MISSED APPROACH','Approach Missed',`${plane.call} left the control area. Try guiding the plane again.`,`Final score: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | Best run: <strong>${String(maxScore).padStart(4,'0')}</strong><br>Landings: <strong>${landings}</strong> | Go-arounds: <strong>${goArounds}</strong>`,'Try Again →',start)},650)}
+  if(success){landings++;if(landings>maxLandings){maxLandings=landings;saveMaxLandings()}renderScore();showMessage('GUIDANCE LIMIT. TAKE OVER VISUALLY.',10);setTimeout(()=>{if(!playing)modal('TOUCHDOWN','Safe Landing',`You guided ${plane.call} to the runway.`,`Center: <strong>+${bonus.center}</strong> | Straight: <strong>+${bonus.steady}</strong> | Stunt: <strong>+${bonus.stunt}</strong><br>Score: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | Landings: <strong>${landings}</strong> | Go-arounds: <strong>${goArounds}</strong>`,'Next Plane →',()=>{ui.overlay.hidden=true;playing=true;newPlane();lastTime=performance.now();requestAnimationFrame(frame)})},650)}
+  else{misses++;showMessage(reason,10);setTimeout(()=>{if(!playing)modal('MISSED APPROACH','Approach Missed',`${plane.call} left the control area. Try guiding the plane again.`,`Final score: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | Best score: <strong>${String(maxScore).padStart(4,'0')}</strong><br>Landings: <strong>${landings}</strong> | Best landings: <strong>${maxLandings}</strong> | Go-arounds: <strong>${goArounds}</strong>`,'Try Again →',start)},650)}
 }
 function update(dt,t){
   if(!plane||!playing||!ui.overlay.hidden)return;

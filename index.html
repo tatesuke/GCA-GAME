@@ -52,7 +52,7 @@
     <section class="status-strip" aria-label="Flight status">
       <div><span class="label">CALLSIGN</span><strong id="callsign">SIM 204</strong><span class="aircraft-type" id="aircraftType">AIRCRAFT --</span></div>
       <div><span class="label">RANGE</span><strong><span id="range">--</span> <em>NM</em></strong></div>
-      <div><span class="label">LANDINGS</span><strong id="landingCount">0</strong></div>
+      <div><span class="label">LANDINGS</span><strong id="landingCount">0</strong><span class="aircraft-type">BEST <span id="maxLandings">0</span></span></div>
       <div><span class="label">SCORE</span><strong id="score">0000</strong><span class="aircraft-type">BEST <span id="maxScore">0000</span></span></div>
     </section>
 
@@ -88,7 +88,7 @@
     <footer><button class="go-around" id="goAround" type="button">↻ GO AROUND</button><button id="voiceButton" aria-pressed="true">VOICE ON</button><button id="helpButton">Help <span>?</span></button></footer>
   </main>
 
-  <div class="overlay" id="overlay" hidden><div class="modal"><span class="label" id="modalKicker">BRIEFING</span><h2 id="modalTitle">Start Control</h2><p id="modalText"></p><div class="modal-info" id="modalInfo"></div><div class="modal-sound" id="modalSound"><span>VOICE</span><button id="modalVoiceButton" type="button" aria-pressed="true">ON</button></div><button id="modalButton">Start Control <span>→</span></button><button id="shareScore" type="button" hidden>Share Score ↗</button></div></div>
+  <div class="overlay" id="overlay" hidden><div class="modal"><span class="label" id="modalKicker">BRIEFING</span><h2 id="modalTitle">Start Control</h2><p id="modalText"></p><div class="modal-info" id="modalInfo"></div><div class="modal-sound" id="modalSound"><span>VOICE</span><button id="modalVoiceButton" type="button" aria-pressed="true">ON</button></div><button id="modalButton">Start Control <span>→</span></button><button id="shareScore" type="button" hidden>Share Result ↗</button></div></div>
   <script src="game.js"></script>
 </body>
 </html>
