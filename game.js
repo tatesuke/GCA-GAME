@@ -1,6 +1,38 @@
 const canvas = document.getElementById('radar');
 const ctx = canvas.getContext('2d');
 const $ = id => document.getElementById(id);
+const languageSelect=$('languageSelect');
+let language=/^ja(?:-|$)/i.test(navigator.language||navigator.languages?.[0]||'')?'ja':'en';
+languageSelect.value=language;
+document.documentElement.lang=language;
+let activeDialog=null;
+const dialogCopy={
+  briefing:{
+    en:['BRIEFING','Start Control','You are the controller for the final approach. Give the aircraft a heading and guide it to the runway.','Score points while flying in the approach path. The narrow green path pays more than the wider amber path, with rates adjusted for aircraft speed. Stay in the narrow path for <strong>7 continuous seconds</strong> to earn double points there.<br>Turn the dial and tap Send Heading.','Start Control →'],
+    ja:['ブリーフィング','管制開始','あなたは最終進入の管制官です。航空機に方位を指示し、滑走路まで誘導してください。','進入経路内を飛ぶと得点が入ります。狭い緑の経路は広い琥珀色の経路より高得点で、得点率は機体の速度に応じて変わります。緑の経路に<strong>連続7秒間</strong>とどまると、そこでの得点が2倍になります。<br>ダイヤルを回して「Send Heading」を押してください。','管制開始 →']
+  },
+  help:{
+    en:['HOW TO PLAY','How to Play','Guide the aircraft to the runway.','1. Turn the dial to choose a heading, then send it. Use the 5-degree buttons for small changes; RESET restores the instructed heading.<br>2. Stay in the narrow green path for more points, or the wider amber path for fewer points. Rates scale with aircraft speed: initially about 12/s for a helicopter, 16/s for a light plane, and 20/s for a heavy plane in the narrow path.<br>3. Stay in the narrow path for 7 continuous seconds to double its rate. Leaving the narrow path resets the streak.<br><br>Landing bonuses: up to 200 for touching down near the center, up to 160 for a steady final approach, and 40 for recovering from a large turn before final approach.<br><br>GO AROUND retries the same plane for a 100-point penalty. A sustained sharp turn on final approach costs 40 points. Score stops at zero. LANDINGS counts successful approaches in this run; BEST is the highest final score when a run ends in a missed approach.','Back to Game →'],
+    ja:['遊び方','遊び方','航空機を滑走路まで誘導してください。','1. ダイヤルで方位を選び、Send Headingで指示します。5度ボタンで微調整できます。RESETで現在指示している方位に戻せます。<br>2. 狭い緑の経路では高得点、広い琥珀色の経路では低めの得点が入ります。得点率は機体の速度に応じて変わり、緑の経路では当初、ヘリコプターが約12点/秒、軽飛行機が約16点/秒、大型機が約20点/秒です。<br>3. 緑の経路に連続7秒間とどまると得点率が2倍になります。経路を外れると連続時間はリセットされます。<br><br>着陸ボーナス：中心付近への着陸で最大200点、安定した最終進入で最大160点、最終進入前の大きな旋回から立て直すと40点。<br><br>GO AROUNDは100点を消費して同じ機体でやり直します。最終進入中に急旋回を続けると40点減点されます。得点は0点未満になりません。LANDINGSは今回成功した着陸数、BESTはミストアプローチで終了した時点の最高得点です。','ゲームに戻る →']
+  },
+  landing:{
+    en:['TOUCHDOWN','Safe Landing',call=>`You guided ${call} to the runway.`,b=>`Center: <strong>+${b.center}</strong> | Straight: <strong>+${b.steady}</strong> | Stunt: <strong>+${b.stunt}</strong><br>Score: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | Landings: <strong>${landings}</strong> | Go-arounds: <strong>${goArounds}</strong>`,'Next Plane →'],
+    ja:['TOUCHDOWN','Safe Landing',call=>`${call}を滑走路まで誘導しました。`,b=>`中心: <strong>+${b.center}</strong> | 安定進入: <strong>+${b.steady}</strong> | 立て直し: <strong>+${b.stunt}</strong><br>得点: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | 着陸: <strong>${landings}</strong> | ゴーアラウンド: <strong>${goArounds}</strong>`,'次の機体 →']
+  },
+  missed:{
+    en:['MISSED APPROACH','Approach Missed',call=>`${call} left the control area. Try guiding the plane again.`,()=>`Final score: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | Best score: <strong>${String(maxScore).padStart(4,'0')}</strong><br>Landings: <strong>${landings}</strong> | Best landings: <strong>${maxLandings}</strong> | Go-arounds: <strong>${goArounds}</strong>`,'Try Again →'],
+    ja:['MISSED APPROACH','Approach Missed',call=>`${call}が管制区域を離れました。もう一度誘導してください。`,()=>`最終得点: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | 最高得点: <strong>${String(maxScore).padStart(4,'0')}</strong><br>着陸: <strong>${landings}</strong> | 最多着陸: <strong>${maxLandings}</strong> | ゴーアラウンド: <strong>${goArounds}</strong>`,'もう一度 →']
+  }
+};
+function showDialog(kind,action,call,bonus){
+  activeDialog={kind,action,call,bonus};
+  const [kicker,title,description,details,button]=dialogCopy[kind][language];
+  modal(kicker,title,typeof description==='function'?description(call):description,typeof details==='function'?details(bonus):details,button,action);
+  ui.overlay.querySelector('.modal').classList.toggle('missed',kind==='missed');
+  $('modalSound').hidden=kind!=='briefing'||!voiceSupported;
+  $('shareScore').hidden=kind!=='missed'&&kind!=='landing';
+}
+languageSelect.onchange=()=>{language=languageSelect.value;document.documentElement.lang=language;if(activeDialog&&!ui.overlay.hidden)showDialog(activeDialog.kind,activeDialog.action,activeDialog.call,activeDialog.bonus)};
 const ui = {callsign:$('callsign'),range:$('range'),heading:$('heading'),score:$('score'),maxScore:$('maxScore'),landingCount:$('landingCount'),maxLandings:$('maxLandings'),selected:$('selectedHeading'),pointer:$('dialPointer'),dial:$('dial'),message:$('message'),messageText:$('messageText'),note:$('commandNote'),overlay:$('overlay'),modalKicker:$('modalKicker'),modalTitle:$('modalTitle'),modalText:$('modalText'),modalInfo:$('modalInfo'),modalButton:$('modalButton'),radarState:$('radarState')};
 const runway = {x:.5,y:.5,heading:90,halfWidth:.047};
 const camera = {x:.5,y:.5,zoom:1.3};
@@ -231,8 +263,8 @@ function end(success,reason='MISSED APPROACH.'){
   renderScore();
   plane.pendingHeading=null;
   clearRadio();
-  if(success){landings++;if(landings>maxLandings){maxLandings=landings;saveMaxLandings()}renderScore();showMessage('GUIDANCE LIMIT. TAKE OVER VISUALLY.',10);setTimeout(()=>{if(!playing)modal('TOUCHDOWN','Safe Landing',`You guided ${plane.call} to the runway.`,`Center: <strong>+${bonus.center}</strong> | Straight: <strong>+${bonus.steady}</strong> | Stunt: <strong>+${bonus.stunt}</strong><br>Score: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | Landings: <strong>${landings}</strong> | Go-arounds: <strong>${goArounds}</strong>`,'Next Plane →',()=>{ui.overlay.hidden=true;playing=true;newPlane();lastTime=performance.now();requestAnimationFrame(frame)})},650)}
-  else{misses++;showMessage(reason,10);setTimeout(()=>{if(!playing)modal('MISSED APPROACH','Approach Missed',`${plane.call} left the control area. Try guiding the plane again.`,`Final score: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | Best score: <strong>${String(maxScore).padStart(4,'0')}</strong><br>Landings: <strong>${landings}</strong> | Best landings: <strong>${maxLandings}</strong> | Go-arounds: <strong>${goArounds}</strong>`,'Try Again →',start)},650)}
+  if(success){landings++;if(landings>maxLandings){maxLandings=landings;saveMaxLandings()}renderScore();showMessage('GUIDANCE LIMIT. TAKE OVER VISUALLY.',10);setTimeout(()=>{if(!playing)showDialog('landing',()=>{ui.overlay.hidden=true;playing=true;newPlane();lastTime=performance.now();requestAnimationFrame(frame)},plane.call,bonus)},650)}
+  else{misses++;showMessage(reason,10);setTimeout(()=>{if(!playing)showDialog('missed',start,plane.call)},650)}
 }
 function update(dt,t){
   if(!plane||!playing||!ui.overlay.hidden)return;
@@ -378,6 +410,6 @@ $('voiceButton').onclick=$('modalVoiceButton').onclick=()=>{voiceEnabled=!voiceE
 if(!voiceSupported){$('voiceButton').hidden=true;$('voiceButton').setAttribute('aria-pressed','false')}
 window.addEventListener('resize',()=>{resize();draw(performance.now())});
 // Keep the instructions tied to the current approach direction.
-$('helpButton').onclick=()=>modal('HOW TO PLAY','How to Play','Guide the aircraft to the runway.','1. Turn the dial to choose a heading, then send it. Use the 5-degree buttons for small changes; RESET restores the instructed heading.<br>2. Stay in the narrow green path for more points, or the wider amber path for fewer points. Rates scale with aircraft speed: initially about 12/s for a helicopter, 16/s for a light plane, and 20/s for a heavy plane in the narrow path.<br>3. Stay in the narrow path for 7 continuous seconds to double its rate. Leaving the narrow path resets the streak.<br><br>Landing bonuses: up to 200 for touching down near the center, up to 160 for a steady final approach, and 40 for recovering from a large turn before final approach.<br><br>GO AROUND retries the same plane for a 100-point penalty. A sustained sharp turn on final approach costs 40 points. Score stops at zero. LANDINGS counts successful approaches in this run; BEST is the highest final score when a run ends in a missed approach.','Back to Game →',()=>{ui.overlay.hidden=true;lastTime=performance.now()});
+$('helpButton').onclick=()=>showDialog('help',()=>{ui.overlay.hidden=true;lastTime=performance.now()});
 setSelected(90);renderScore();resize();draw(0);
-modal('BRIEFING','Start Control','You are the controller for the final approach. Give the aircraft a heading and guide it to the runway.','Score points while flying in the approach path. The narrow green path pays more than the wider amber path, with rates adjusted for aircraft speed. Stay in the narrow path for <strong>7 continuous seconds</strong> to earn double points there.<br>Turn the dial and tap Send Heading.','Start Control →',start);
+showDialog('briefing',start);
