@@ -1,7 +1,7 @@
 const canvas = document.getElementById('radar');
 const ctx = canvas.getContext('2d');
 const $ = id => document.getElementById(id);
-const ui = {callsign:$('callsign'),range:$('range'),heading:$('heading'),score:$('score'),maxScore:$('maxScore'),goAroundCount:$('goAroundCount'),selected:$('selectedHeading'),pointer:$('dialPointer'),dial:$('dial'),message:$('message'),messageText:$('messageText'),note:$('commandNote'),overlay:$('overlay'),modalKicker:$('modalKicker'),modalTitle:$('modalTitle'),modalText:$('modalText'),modalInfo:$('modalInfo'),modalButton:$('modalButton'),radarState:$('radarState')};
+const ui = {callsign:$('callsign'),range:$('range'),heading:$('heading'),score:$('score'),maxScore:$('maxScore'),landingCount:$('landingCount'),selected:$('selectedHeading'),pointer:$('dialPointer'),dial:$('dial'),message:$('message'),messageText:$('messageText'),note:$('commandNote'),overlay:$('overlay'),modalKicker:$('modalKicker'),modalTitle:$('modalTitle'),modalText:$('modalText'),modalInfo:$('modalInfo'),modalButton:$('modalButton'),radarState:$('radarState')};
 const runway = {x:.5,y:.5,heading:90,halfWidth:.047};
 const camera = {x:.5,y:.5,zoom:1.3};
 const approachStartDistance=.98,finalCourseLength=.85,rangeScale=10;
@@ -21,7 +21,7 @@ function renderScore(){
   const current=Math.floor(score);
   ui.score.textContent=String(current).padStart(4,'0');
   ui.maxScore.textContent=String(maxScore).padStart(4,'0');
-  ui.goAroundCount.textContent=String(goArounds);
+  ui.landingCount.textContent=String(landings);
 }
 function saveMaxScore(){try{localStorage.setItem(maxScoreKey,String(maxScore))}catch{}}
 let penaltyToastTimer;
@@ -108,10 +108,10 @@ function courseAdvisory(){
   if(absolute<localizerWidth())course='ON COURSE';
   else{
     const side=offset<0?'LEFT':'RIGHT';
-    const degree=absolute>runway.halfWidth*1.5?'':'SLIGHTLY ';
+    const degree=absolute>runway.halfWidth*1.5?'WELL ':'SLIGHTLY ';
     const correcting=plane.lastCourseAbs!==null&&absolute<plane.lastCourseAbs-.006;
     const diverging=plane.lastCourseAbs!==null&&absolute>plane.lastCourseAbs+.006;
-    course=diverging?`GOING ${side} OF COURSE`: `${degree}${side} OF COURSE${correcting?' AND CORRECTING':''}`;
+    course=diverging?`GOING ${degree}${side} OF COURSE`: `${degree}${side} OF COURSE${correcting?' AND CORRECTING':''}`;
   }
   plane.lastCourseAbs=absolute;
   const miles=Math.max(0,-coursePosition(plane.x,plane.y).along*rangeScale);
@@ -210,7 +210,7 @@ function goAround(){
   newPlane(true);
   lastTime=performance.now();
 }
-function start(){score=0;goArounds=0;renderScore();landings=0;misses=0;nextCallsign=0;elapsed=0;$('clock').textContent='00:00';ui.overlay.hidden=true;playing=true;newPlane();lastTime=performance.now();requestAnimationFrame(frame)}
+function start(){score=0;goArounds=0;landings=0;renderScore();misses=0;nextCallsign=0;elapsed=0;$('clock').textContent='00:00';ui.overlay.hidden=true;playing=true;newPlane();lastTime=performance.now();requestAnimationFrame(frame)}
 function end(success,reason='MISSED APPROACH.'){
   playing=false;
   $('issue').classList.remove('transmitting');
@@ -220,7 +220,7 @@ function end(success,reason='MISSED APPROACH.'){
   renderScore();
   plane.pendingHeading=null;
   clearRadio();
-  if(success){landings++;showMessage('GUIDANCE LIMIT. TAKE OVER VISUALLY.',10);setTimeout(()=>{if(!playing)modal('TOUCHDOWN','Safe Landing',`You guided ${plane.call} to the runway.`,`Center: <strong>+${bonus.center}</strong> | Straight: <strong>+${bonus.steady}</strong> | Stunt: <strong>+${bonus.stunt}</strong><br>Score: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | Landings: <strong>${landings}</strong> | Go-arounds: <strong>${goArounds}</strong>`,'Next Plane →',()=>{ui.overlay.hidden=true;playing=true;newPlane();lastTime=performance.now();requestAnimationFrame(frame)})},650)}
+  if(success){landings++;renderScore();showMessage('GUIDANCE LIMIT. TAKE OVER VISUALLY.',10);setTimeout(()=>{if(!playing)modal('TOUCHDOWN','Safe Landing',`You guided ${plane.call} to the runway.`,`Center: <strong>+${bonus.center}</strong> | Straight: <strong>+${bonus.steady}</strong> | Stunt: <strong>+${bonus.stunt}</strong><br>Score: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | Landings: <strong>${landings}</strong> | Go-arounds: <strong>${goArounds}</strong>`,'Next Plane →',()=>{ui.overlay.hidden=true;playing=true;newPlane();lastTime=performance.now();requestAnimationFrame(frame)})},650)}
   else{misses++;showMessage(reason,10);setTimeout(()=>{if(!playing)modal('MISSED APPROACH','Approach Missed',`${plane.call} left the control area. Try guiding the plane again.`,`Final score: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | Best run: <strong>${String(maxScore).padStart(4,'0')}</strong><br>Landings: <strong>${landings}</strong> | Go-arounds: <strong>${goArounds}</strong>`,'Try Again →',start)},650)}
 }
 function update(dt,t){
@@ -329,11 +329,15 @@ function draw(t){const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)retu
 }
 function frame(t){const dt=Math.min((t-lastTime)/1000,.06);lastTime=t;update(dt,t);draw(t);if(t>messageUntil)ui.message.style.opacity='.35';if(playing)requestAnimationFrame(frame)}
 function dialFromPointer(e){const r=ui.dial.getBoundingClientRect(),x=e.clientX-r.left-r.width/2,y=e.clientY-r.top-r.height/2;setSelected(Math.atan2(x,-y)*180/Math.PI)}
-ui.dial.addEventListener('pointerdown',e=>{if(e.target.closest('#resetHeading'))return;ui.dial.setPointerCapture(e.pointerId);dialFromPointer(e)});ui.dial.addEventListener('pointermove',e=>{if(ui.dial.hasPointerCapture(e.pointerId))dialFromPointer(e)});
-$('resetHeading').addEventListener('pointerdown',e=>e.stopPropagation());
+ui.dial.addEventListener('pointerdown',e=>{ui.dial.setPointerCapture(e.pointerId);dialFromPointer(e)});
+ui.dial.addEventListener('pointermove',e=>{if(ui.dial.hasPointerCapture(e.pointerId))dialFromPointer(e)});
 $('resetHeading').onclick=()=>{if(plane)setSelected(plane.pendingHeading?.heading??plane.target)};
 ui.dial.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowDown','ArrowRight','ArrowUp'].includes(e.key)){e.preventDefault();setSelected(selected+(e.key==='ArrowLeft'||e.key==='ArrowDown'?-5:5))}});
 $('minus').onclick=()=>setSelected(selected-5);$('plus').onclick=()=>setSelected(selected+5);
+$('swapControls').onclick=()=>{
+  const swapped=$('controlContent').classList.toggle('swapped');
+  $('swapControls').setAttribute('aria-pressed',String(swapped));
+};
 $('radarZoomOut').onclick=()=>changeRadarZoom(1/1.2);
 $('radarZoomIn').onclick=()=>changeRadarZoom(1.2);
 $('radarReset').onclick=()=>{resetRadar();draw(performance.now())};
@@ -363,6 +367,6 @@ $('voiceButton').onclick=$('modalVoiceButton').onclick=()=>{voiceEnabled=!voiceE
 if(!voiceSupported){$('voiceButton').hidden=true;$('voiceButton').setAttribute('aria-pressed','false')}
 window.addEventListener('resize',()=>{resize();draw(performance.now())});
 // Keep the instructions tied to the current approach direction.
-$('helpButton').onclick=()=>modal('HOW TO PLAY','How to Play','Guide the aircraft to the runway.','1. Turn the dial to choose a heading, then send it.<br>2. Stay in the narrow green path for more points, or the wider amber path for fewer points. Rates scale with aircraft speed: initially about 12/s for a helicopter, 16/s for a light plane, and 20/s for a heavy plane in the narrow path.<br>3. Stay in the narrow path for 7 continuous seconds to double its rate. Leaving the narrow path resets the streak.<br><br>Landing bonuses: up to 200 for touching down near the center, up to 160 for a steady final approach, and 40 for recovering from a large turn before final approach.<br><br>GO AROUND retries the same plane for a 100-point penalty. A sustained sharp turn on final approach costs 40 points. Score stops at zero. GO AROUNDS counts retries in this run; BEST is the highest final score when a run ends in a missed approach.','Back to Game →',()=>{ui.overlay.hidden=true;lastTime=performance.now()});
+$('helpButton').onclick=()=>modal('HOW TO PLAY','How to Play','Guide the aircraft to the runway.','1. Turn the dial to choose a heading, then send it. Use the 5-degree buttons for small changes; RESET restores the instructed heading.<br>2. Stay in the narrow green path for more points, or the wider amber path for fewer points. Rates scale with aircraft speed: initially about 12/s for a helicopter, 16/s for a light plane, and 20/s for a heavy plane in the narrow path.<br>3. Stay in the narrow path for 7 continuous seconds to double its rate. Leaving the narrow path resets the streak.<br><br>Landing bonuses: up to 200 for touching down near the center, up to 160 for a steady final approach, and 40 for recovering from a large turn before final approach.<br><br>GO AROUND retries the same plane for a 100-point penalty. A sustained sharp turn on final approach costs 40 points. Score stops at zero. LANDINGS counts successful approaches in this run; BEST is the highest final score when a run ends in a missed approach.','Back to Game →',()=>{ui.overlay.hidden=true;lastTime=performance.now()});
 setSelected(90);renderScore();resize();draw(0);
 modal('BRIEFING','Start Control','You are the controller for the final approach. Give the aircraft a heading and guide it to the runway.','Score points while flying in the approach path. The narrow green path pays more than the wider amber path, with rates adjusted for aircraft speed. Stay in the narrow path for <strong>7 continuous seconds</strong> to earn double points there.<br>Turn the dial and tap Send Heading.','Start Control →',start);

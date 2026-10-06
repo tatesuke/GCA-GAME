@@ -5,6 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
   <meta name="theme-color" content="#071310">
   <title>TinyGCA / FINAL APPROACH</title>
+  <link rel="canonical" href="https://tatesuke.github.io/TinyGCA/">
+  <meta name="description" content="Guide aircraft to the runway in TinyGCA, a compact radar approach game. Set headings, stay on course, and land safely.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://tatesuke.github.io/TinyGCA/">
+  <meta property="og:title" content="TinyGCA / FINAL APPROACH">
+  <meta property="og:description" content="Guide aircraft to the runway in a compact radar approach game. Set headings, stay on course, and land safely.">
+  <meta property="og:image" content="https://tatesuke.github.io/TinyGCA/og-image.png">
+  <meta property="og:image:width" content="1500">
+  <meta property="og:image:height" content="787">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:alt" content="TinyGCA radar showing an aircraft correcting toward the runway, beside the heading controls.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="TinyGCA / FINAL APPROACH">
+  <meta name="twitter:description" content="Guide aircraft to the runway in a compact radar approach game. Set headings, stay on course, and land safely.">
+  <meta name="twitter:image" content="https://tatesuke.github.io/TinyGCA/og-image.png">
+  <meta name="twitter:image:alt" content="TinyGCA radar showing an aircraft correcting toward the runway, beside the heading controls.">
   <link rel="stylesheet" href="style.css">
   <style>
     #radar { touch-action: none; cursor: grab; }
@@ -36,7 +52,7 @@
     <section class="status-strip" aria-label="Flight status">
       <div><span class="label">CALLSIGN</span><strong id="callsign">SIM 204</strong><span class="aircraft-type" id="aircraftType">AIRCRAFT --</span></div>
       <div><span class="label">RANGE</span><strong><span id="range">--</span> <em>NM</em></strong></div>
-      <div><span class="label">GO AROUNDS</span><strong id="goAroundCount">0</strong></div>
+      <div><span class="label">LANDINGS</span><strong id="landingCount">0</strong></div>
       <div><span class="label">SCORE</span><strong id="score">0000</strong><span class="aircraft-type">BEST <span id="maxScore">0000</span></span></div>
     </section>
 
@@ -51,18 +67,18 @@
     </section>
 
     <section class="control-panel">
-      <div class="panel-heading"><div><span class="label">VECTOR CONTROL</span><h1>Heading Control</h1></div><span class="instruction">Turn the dial</span></div>
-      <div class="control-content">
+      <div class="panel-heading"><div><span class="label">VECTOR CONTROL</span><h1>Heading Control</h1></div><button id="swapControls" class="swap-controls" type="button" aria-pressed="false" aria-label="Swap compass and heading controls">⇄ SWAP SIDES</button></div>
+      <div class="control-content" id="controlContent">
         <div class="dial-side">
           <div class="dial" id="dial" role="slider" tabindex="0" aria-label="Selected heading" aria-valuemin="0" aria-valuemax="359" aria-valuenow="90">
-            <div class="dial-ticks"></div><div class="dial-face"><span class="dial-n">N</span><span class="dial-e">E</span><span class="dial-s">S</span><span class="dial-w">W</span><span class="dial-pointer" id="dialPointer"></span></div><button class="dial-center" id="resetHeading" type="button" aria-label="Reset to currently instructed heading" title="Reset to instructed heading"></button>
+            <div class="dial-ticks"></div><div class="dial-face"><span class="dial-n">N</span><span class="dial-e">E</span><span class="dial-s">S</span><span class="dial-w">W</span><span class="dial-pointer" id="dialPointer"></span></div><div class="dial-center" aria-hidden="true"></div>
           </div>
-          <div class="dial-hint">↻ DRAG · TAP CENTER TO RESET</div>
+          <div class="dial-hint">DRAG TO SET HEADING</div>
         </div>
         <div class="command-side">
           <div class="heading-labels"><span class="label">SELECTED HEADING</span><span class="current-heading"><span class="label">CURRENT</span><strong><span id="heading">---</span>°</strong></span></div>
           <div class="selected"><span id="selectedHeading">090</span><sup>°</sup></div>
-          <div class="adjust"><button id="minus" aria-label="Decrease heading by 5 degrees">− 5°</button><button id="plus" aria-label="Increase heading by 5 degrees">+ 5°</button></div>
+          <div class="adjust"><button id="minus" aria-label="Decrease heading by 5 degrees">− 5°</button><button id="resetHeading" type="button" aria-label="Reset to currently instructed heading" title="Reset to instructed heading">RESET</button><button id="plus" aria-label="Increase heading by 5 degrees">+ 5°</button></div>
           <button class="issue" id="issue"><span>↗</span> Send Heading <small>TRANSMIT</small></button>
           <p class="command-note" id="commandNote">The aircraft will turn to your heading.</p>
         </div>
