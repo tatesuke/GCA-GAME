@@ -33,11 +33,11 @@ function showDialog(kind,action,call,bonus){
   $('shareScore').hidden=kind!=='missed'&&kind!=='landing';
 }
 languageSelect.onchange=()=>{language=languageSelect.value;document.documentElement.lang=language;if(activeDialog&&!ui.overlay.hidden)showDialog(activeDialog.kind,activeDialog.action,activeDialog.call,activeDialog.bonus)};
-const ui = {callsign:$('callsign'),range:$('range'),heading:$('heading'),score:$('score'),maxScore:$('maxScore'),landingCount:$('landingCount'),maxLandings:$('maxLandings'),selected:$('selectedHeading'),pointer:$('dialPointer'),dial:$('dial'),message:$('message'),messageText:$('messageText'),note:$('commandNote'),overlay:$('overlay'),modalKicker:$('modalKicker'),modalTitle:$('modalTitle'),modalText:$('modalText'),modalInfo:$('modalInfo'),modalButton:$('modalButton'),radarState:$('radarState')};
+const ui = {callsign:$('callsign'),range:$('range'),heading:$('heading'),score:$('score'),maxScore:$('maxScore'),landingCount:$('landingCount'),maxLandings:$('maxLandings'),selected:$('selectedHeading'),pointer:$('dialPointer'),dial:$('dial'),message:$('message'),messageText:$('messageText'),note:$('commandNote'),overlay:$('overlay'),modalKicker:$('modalKicker'),modalTitle:$('modalTitle'),modalText:$('modalText'),modalInfo:$('modalInfo'),modalButton:$('modalButton')};
 const runway = {x:.5,y:.5,heading:90,halfWidth:.047};
 const camera = {x:.5,y:.5,zoom:1.3};
 const approachStartDistance=.98,finalCourseLength=.85,rangeScale=10;
-const wind = {cross:0,base:0,target:0,max:0,knots:0,nextShift:0,lastDisplay:0};
+const wind = {direction:0,targetDirection:0,speed:0,targetSpeed:0,shownDirection:0,shownSpeed:0,maxKnots:0,knots:0,x:0,y:0,nextShift:0,lastDisplay:0,initialized:false};
 const requiredLocSeconds=7;
 const narrowPointsPerSecond=20,broadPointsPerSecond=6;
 const scoringReferenceSpeed=.024;
@@ -175,19 +175,25 @@ function landingBonuses(position){
   return {center,steady,stunt};
 }
 function updateWindDisplay(){
-  wind.knots=Math.round(Math.abs(wind.cross)/.00045);
-  $('wind').textContent=wind.knots>=2?`DRIFT ${wind.cross<0?'LEFT':'RIGHT'} ${String(wind.knots).padStart(2,'0')} KT`:'DRIFT VARIABLE';
-  $('wind').classList.toggle('gust',wind.knots>=12);
+  wind.knots=Math.round(wind.shownSpeed);
 }
 function updateWind(dt,t){
+  const directionRate=Math.min(5+landings*6.2,36);
   if(t>=wind.nextShift){
-    const direction=(Math.random()<.75?-1:1)*Math.sign(wind.target||1);
-    wind.target=direction*wind.max*(.4+Math.random()*.6);
-    wind.nextShift=t+3000+Math.random()*2500;
+    const directionRange=Math.min(12+landings*28,180);
+    const directionChange=Math.random()*directionRange*2-directionRange;
+    wind.targetDirection+=directionChange;
+    wind.targetSpeed=clamp(wind.targetSpeed+(Math.random()*10-5),3,wind.maxKnots);
+    wind.nextShift=t+2000+Math.abs(directionChange)/directionRate*1000+Math.random()*1500;
   }
-  const change=wind.max*.75*dt;
-  wind.base+=clamp(wind.target-wind.base,-change,change);
-  wind.cross=clamp(wind.base+wind.max*.28*Math.sin(t*.003),-wind.max,wind.max);
+  wind.direction+=clamp(wind.targetDirection-wind.direction,-directionRate*dt,directionRate*dt);
+  wind.speed+=clamp(wind.targetSpeed-wind.speed,-1*dt,1*dt);
+  const direction=wind.direction+Math.sin(t*.00055)*2;
+  const speed=Math.max(0,wind.speed+Math.sin(t*.0008+1.3)*.5);
+  wind.shownDirection=direction;
+  wind.shownSpeed=speed;
+  wind.x=Math.sin(rad(direction))*speed*.00045;
+  wind.y=-Math.cos(rad(direction))*speed*.00045;
   if(t-wind.lastDisplay>250){updateWindDisplay();wind.lastDisplay=t}
 }
 function updateLocalizer(dt){
@@ -223,11 +229,18 @@ function newPlane(retry=false){
   document.querySelector('.radar-top span:last-child').textContent=`RWY ${String(Math.round(runway.heading/10)%36).padStart(2,'0')} ◆`;
   runway.halfWidth=approachHalfWidth(landings);
   $('gateWidth').textContent=`GATE ${Math.round(runway.halfWidth/.047*100)}%`;
-  wind.max=Math.min(.003+landings*.001,.011);
-  wind.cross=(Math.random()<.5?-1:1)*wind.max*(.45+Math.random()*.35);
-  wind.base=wind.cross;
-  wind.target=wind.cross;
-  wind.nextShift=performance.now()+3000+Math.random()*2000;
+  wind.maxKnots=Math.min(7+landings*2,24);
+  if(!wind.initialized){
+    wind.direction=Math.random()*360;
+    wind.targetDirection=wind.direction;
+    wind.speed=wind.targetSpeed=3+Math.random()*Math.max(1,wind.maxKnots-3);
+    wind.shownDirection=wind.direction;
+    wind.shownSpeed=wind.speed;
+    wind.initialized=true;
+  }else{
+    wind.targetSpeed=clamp(wind.targetSpeed,3,wind.maxKnots);
+  }
+  wind.nextShift=performance.now()+2500+Math.random()*1500;
   wind.lastDisplay=0;
   updateWindDisplay();
   const variant=retry?previous.variant:nextCallsign++%4;
@@ -241,7 +254,7 @@ function newPlane(retry=false){
   $('aircraftType').textContent=type.name;
   setSelected(Math.round(s.h/5)*5);
   ui.note.textContent=`${type.name}: ${type.traits}. Wind changes during flight.`;
-  const contact=`RADAR CONTACT. DRIFT ${wind.cross<0?'LEFT':'RIGHT'}, ${wind.knots} KNOTS.`;
+  const contact=`RADAR CONTACT. WIND FROM ${fmt(wind.direction+180)}, ${wind.knots} KNOTS.`;
   const spokenCall=plane.call.replace(/\d{3}/,digits=>digits.split('').map(d=>radioDigits[Number(d)]).join(' '));
   if(retry)showMessage(`GO AROUND ${goArounds}. -${goAroundPenalty} POINTS. RETURN FOR ANOTHER APPROACH.`,5);
   else showMessage(`${plane.call}, ${contact}`,5,`${spokenCall}, ${contact}`);
@@ -278,8 +291,8 @@ function update(dt,t){
   plane.h=norm(plane.h+turn);
   plane.x+=Math.sin(rad(plane.h))*plane.speed*dt;
   plane.y-=Math.cos(rad(plane.h))*plane.speed*dt;
-  plane.x+=Math.cos(rad(runway.heading))*wind.cross*dt;
-  plane.y+=Math.sin(rad(runway.heading))*wind.cross*dt;
+  plane.x+=wind.x*dt;
+  plane.y+=wind.y*dt;
   updateLocalizer(dt);
   if(t-plane.lastTrail>180){plane.trail.push({x:plane.x,y:plane.y});if(plane.trail.length>90)plane.trail.shift();plane.lastTrail=t}
   const dx=runway.x-plane.x,dy=runway.y-plane.y;
@@ -367,15 +380,16 @@ function draw(t){const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)retu
     const x=plane.x*w,y=plane.y*h;
     ctx.translate(x,y);ctx.rotate(rad(plane.h));ctx.shadowBlur=16;ctx.shadowColor='#c4ffb7';ctx.fillStyle='#d1ffbf';drawAircraftSymbol(plane.type.key);ctx.shadowBlur=0;ctx.restore();
     const arrowX=x-18,arrowY=y;
-    const driftX=Math.cos(rad(runway.heading))*wind.cross*w*12,driftY=Math.sin(rad(runway.heading))*wind.cross*h*12;
-    const tipX=arrowX+driftX,tipY=arrowY+driftY,angle=Math.atan2(driftY,driftX);
+    const arrowLength=12+Math.min(wind.shownSpeed,25)*2;
+    const windX=Math.sin(rad(wind.shownDirection))*arrowLength;
+    const windY=-Math.cos(rad(wind.shownDirection))*arrowLength;
+    const tipX=arrowX+windX,tipY=arrowY+windY,angle=Math.atan2(windY,windX);
     ctx.strokeStyle='#f1ab6b';ctx.fillStyle='#f1ab6b';ctx.lineWidth=2;
     ctx.beginPath();ctx.moveTo(arrowX,arrowY);ctx.lineTo(tipX,tipY);ctx.stroke();
     ctx.beginPath();ctx.moveTo(tipX,tipY);ctx.lineTo(tipX-7*Math.cos(angle-.5),tipY-7*Math.sin(angle-.5));ctx.lineTo(tipX-7*Math.cos(angle+.5),tipY-7*Math.sin(angle+.5));ctx.closePath();ctx.fill();
     ctx.strokeStyle='#a6dba2';ctx.beginPath();ctx.moveTo(x+8,y-8);ctx.lineTo(x+21,y-21);ctx.lineTo(x+69,y-21);ctx.stroke();ctx.fillStyle='#d5f4cb';ctx.font='11px DM Mono, monospace';ctx.fillText(plane.call,x+24,y-26);
   }
   ctx.restore();
-  ui.radarState.textContent=`SCAN ${String(Math.floor(t/3600)%99).padStart(2,'0')}`;
 }
 function frame(t){const dt=Math.min((t-lastTime)/1000,.06);lastTime=t;update(dt,t);draw(t);if(t>messageUntil)ui.message.style.opacity='.35';if(playing)requestAnimationFrame(frame)}
 function dialFromPointer(e){const r=ui.dial.getBoundingClientRect(),x=e.clientX-r.left-r.width/2,y=e.clientY-r.top-r.height/2;setSelected(Math.atan2(x,-y)*180/Math.PI)}
