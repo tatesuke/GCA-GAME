@@ -12,12 +12,12 @@ const dialogCopy={
     ja:['ブリーフィング','管制開始','あなたは最終進入の管制官です。航空機に方位を指示し、滑走路まで誘導してください。','進入経路内を飛ぶと得点が入ります。中心線は最も高得点で、安定してなぞるほど倍率が上がります。滑走路の方位に機体を合わせると最大の報酬を得られます。<br>ダイヤルを回して「Send Heading」を押してください。','管制開始 →']
   },
   help:{
-    en:['HOW TO PLAY','How to Play','Guide the aircraft to the runway.','1. Turn the dial to choose a heading, then send it. Use the 5-degree buttons for small changes; RESET restores the instructed heading.<br>2. The amber path earns a small reward, the narrow green path earns more, and tracking the centerline earns the most. Rates scale with aircraft speed.<br>3. Hold the centerline to build the CENTER multiplier from x1 to x2. Runway alignment increases the centerline reward. A brief deviation is forgiven; a larger deviation drains or resets the streak.<br><br>Landing bonuses: up to 200 for touching down near the center, up to 160 for a steady final approach, and 40 for recovering from a large turn before final approach.<br><br>GO AROUND retries the same plane for a 100-point penalty. A sustained sharp turn on final approach costs 40 points. Score stops at zero. LANDINGS counts successful approaches in this run; BEST is the highest final score when a run ends in a missed approach.','Back to Game →'],
-    ja:['遊び方','遊び方','航空機を滑走路まで誘導してください。','1. ダイヤルで方位を選び、Send Headingで指示します。5度ボタンで微調整できます。RESETで現在指示している方位に戻せます。<br>2. 琥珀色の経路では少量、狭い緑の経路ではより多く、中心線をなぞると最も多く得点できます。得点率は機体の速度に応じて変わります。<br>3. 中心線を維持するとCENTER倍率が1倍から2倍まで上がります。滑走路との方位差が小さいほど中心線の報酬が高くなります。短い逸脱は許容されますが、大きく外れると連続時間が減少またはリセットされます。<br><br>着陸ボーナス：中心付近への着陸で最大200点、安定した最終進入で最大160点、最終進入前の大きな旋回から立て直すと40点。<br><br>GO AROUNDは100点を消費して同じ機体でやり直します。最終進入中に急旋回を続けると40点減点されます。得点は0点未満になりません。LANDINGSは今回成功した着陸数、BESTはミストアプローチで終了した時点の最高得点です。','ゲームに戻る →']
+    en:['HOW TO PLAY','How to Play','Guide the aircraft to the runway.','1. Turn the dial to choose a heading, then send it. Use the 5-degree buttons for small changes; RESET restores the instructed heading.<br>2. The amber path earns a small reward, the narrow green path earns more, and tracking the centerline earns the most. Rates scale with aircraft speed.<br>3. Hold the centerline to build the CENTER multiplier from x1 to x2. Runway alignment increases the centerline reward. A brief deviation is forgiven; a larger deviation drains or resets the streak.<br><br>Landing bonuses: up to 100 for touching down near the center, up to 200 for a stable and well-aligned final approach, up to 200 for a ground track parallel to the runway at guidance limit, and 40 for capturing the narrow course for 3 seconds while aligned within 20 degrees. Stability is worth more than a late correction toward the center.<br><br>GO AROUND retries the same plane for a 100-point penalty. A sustained sharp turn on final approach costs 40 points. Score stops at zero. LANDINGS counts successful approaches in this run; BEST is the highest final score when a run ends in a missed approach.','Back to Game →'],
+    ja:['遊び方','遊び方','航空機を滑走路まで誘導してください。','1. ダイヤルで方位を選び、Send Headingで指示します。5度ボタンで微調整できます。RESETで現在指示している方位に戻せます。<br>2. 琥珀色の経路では少量、狭い緑の経路ではより多く、中心線をなぞると最も多く得点できます。得点率は機体の速度に応じて変わります。<br>3. 中心線を維持するとCENTER倍率が1倍から2倍まで上がります。滑走路との方位差が小さいほど中心線の報酬が高くなります。短い逸脱は許容されますが、大きく外れると連続時間が減少またはリセットされます。<br><br>着陸ボーナス：中心付近への着陸で最大100点、滑走路方位に沿った安定進入で最大200点、ガイダンスリミット直前の対地航跡が滑走路と平行なら最大200点、方位差20度以内で狭い経路を3秒間維持するとコース捕捉40点。終盤に中心へ無理に寄せるより、安定した進入のほうが高く評価されます。<br><br>GO AROUNDは100点を消費して同じ機体でやり直します。最終進入中に急旋回を続けると40点減点されます。得点は0点未満になりません。LANDINGSは今回成功した着陸数、BESTはミストアプローチで終了した時点の最高得点です。','ゲームに戻る →']
   },
   landing:{
-    en:['TOUCHDOWN','Safe Landing',call=>`You guided ${call} to the runway.`,b=>`Center: <strong>+${b.center}</strong> | Straight: <strong>+${b.steady}</strong> | Stunt: <strong>+${b.stunt}</strong><br>Score: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | Landings: <strong>${landings}</strong> | Go-arounds: <strong>${goArounds}</strong>`,'Next Plane →'],
-    ja:['TOUCHDOWN','Safe Landing',call=>`${call}を滑走路まで誘導しました。`,b=>`中心: <strong>+${b.center}</strong> | 安定進入: <strong>+${b.steady}</strong> | 立て直し: <strong>+${b.stunt}</strong><br>得点: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | 着陸: <strong>${landings}</strong> | ゴーアラウンド: <strong>${goArounds}</strong>`,'次の機体 →']
+    en:['TOUCHDOWN','Safe Landing',call=>`You guided ${call} to the runway.`,b=>`Center: <strong>+${b.center}</strong> | Stable: <strong>+${b.steady}</strong> | Track: <strong>+${b.track}</strong> | Capture: <strong>+${b.capture}</strong><br>Score: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | Landings: <strong>${landings}</strong> | Go-arounds: <strong>${goArounds}</strong>`,'Next Plane →'],
+    ja:['TOUCHDOWN','Safe Landing',call=>`${call}を滑走路まで誘導しました。`,b=>`中心: <strong>+${b.center}</strong> | 安定進入: <strong>+${b.steady}</strong> | 進入軌跡: <strong>+${b.track}</strong> | コース捕捉: <strong>+${b.capture}</strong><br>得点: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | 着陸: <strong>${landings}</strong> | ゴーアラウンド: <strong>${goArounds}</strong>`,'次の機体 →']
   },
   missed:{
     en:['MISSED APPROACH','Approach Missed',call=>`${call} left the control area. Try guiding the plane again.`,()=>`Final score: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | Best score: <strong>${String(maxScore).padStart(4,'0')}</strong><br>Landings: <strong>${landings}</strong> | Best landings: <strong>${maxLandings}</strong> | Go-arounds: <strong>${goArounds}</strong>`,'Try Again →'],
@@ -174,10 +174,14 @@ function courseAdvisory(){
 function localizerWidth(along=0){return Math.max(.007,runway.halfWidth*.2)+Math.abs(Math.min(0,along))*Math.tan(rad(1.35))}
 function broadLocalizerWidth(along=0){return Math.max(.014,runway.halfWidth*.35)+Math.abs(Math.min(0,along))*Math.tan(rad(4.5))}
 function landingBonuses(position){
-  const center=Math.round(200*clamp(1-Math.abs(position.side)/runway.halfWidth,0,1));
-  const steady=plane.steadySeconds>=3?Math.round(160*clamp(1-plane.steadyPenalty/plane.steadySeconds,0,1)):0;
-  const stunt=plane.preFinalTurn>=100&&plane.maxPreFinalError>=60?40:0;
-  return {center,steady,stunt};
+  const center=Math.round(100*clamp(1-Math.abs(position.side)/runway.halfWidth,0,1));
+  const steady=plane.steadySeconds>=3?Math.round(200*clamp(1-plane.steadyPenalty/plane.steadySeconds,0,1)):0;
+  const first=plane.limitTrackSamples[0],last=plane.limitTrackSamples[plane.limitTrackSamples.length-1];
+  const alongTravel=first&&last?last.along-first.along:0,sideTravel=first&&last?last.side-first.side:0;
+  const trackError=alongTravel>0?Math.abs(Math.atan2(sideTravel,alongTravel)*180/Math.PI):90;
+  const track=plane.limitTrackSeconds>=2?Math.round(200*clamp(1-trackError/12,0,1)):0;
+  const capture=plane.courseCaptured?40:0;
+  return {center,steady,track,capture};
 }
 function updateWindDisplay(){
   wind.knots=Math.round(wind.shownSpeed);
@@ -210,6 +214,7 @@ function updateLocalizer(dt){
   const onCenter=inFinal&&offset<narrowWidth*.35;
   const onNarrow=inFinal&&offset<narrowWidth;
   const onBroad=inFinal&&offset<broadWidth;
+  if(!plane.courseCaptured){plane.captureSeconds=onNarrow&&headingError(plane.h)<=20?plane.captureSeconds+dt:0;if(plane.captureSeconds>=3)plane.courseCaptured=true}
   if(onCenter){plane.centerSeconds+=dt;plane.centerMissSeconds=0}
   else if(onNarrow){plane.centerMissSeconds+=dt;if(plane.centerMissSeconds>.5)plane.centerSeconds=Math.max(0,plane.centerSeconds-dt*2)}
   else{plane.centerSeconds=0;plane.centerMissSeconds=0}
@@ -266,7 +271,7 @@ function newPlane(retry=false){
   const startPoint=coursePoint(-approachStartDistance,side);
   const s={...startPoint,h:norm(runway.heading+(side<0?25:-25))};
   const type=retry?previous.type:aircraftTypes[Math.floor(Math.random()*aircraftTypes.length)];
-  plane={x:s.x,y:s.y,h:s.h,target:s.h,call:retry?previous.call:callsigns[(nextCallsign-1)%callsigns.length],type,variant,trail:[],speed:type.speed+Math.min(landings,6)*.0008,lastTrail:0,lastCourseCall:performance.now(),lastCommandAt:0,lastCourseAbs:null,nextDistanceCall:8,centerSeconds:0,centerMissSeconds:0,scoringZone:'OFF PATH',currentPointRate:0,currentMultiplier:1,pendingHeading:null,steadySamples:[],steadySeconds:0,steadyPenalty:0,lastSide:side,preFinalTurn:0,maxPreFinalError:0,sharpTurnSeconds:0,sharpTurnCharged:false};
+  plane={x:s.x,y:s.y,h:s.h,target:s.h,call:retry?previous.call:callsigns[(nextCallsign-1)%callsigns.length],type,variant,trail:[],speed:type.speed+Math.min(landings,6)*.0008,lastTrail:0,lastCourseCall:performance.now(),lastCommandAt:0,lastCourseAbs:null,nextDistanceCall:8,centerSeconds:0,centerMissSeconds:0,captureSeconds:0,courseCaptured:false,scoringZone:'OFF PATH',currentPointRate:0,currentMultiplier:1,pendingHeading:null,steadySeconds:0,steadyPenalty:0,limitTrackSamples:[],limitTrackSeconds:0,sharpTurnSeconds:0,sharpTurnCharged:false};
   $('locStatus').textContent='LOC · ACQUIRE';
   $('locStatus').classList.remove('established');
   $('aircraftType').textContent=type.name;
@@ -292,7 +297,7 @@ function end(success,reason='MISSED APPROACH.'){
   playing=false;
   $('issue').classList.remove('transmitting');
   const bonus=success?landingBonuses(coursePosition(plane.x,plane.y)):null;
-  if(bonus)score+=bonus.center+bonus.steady+bonus.stunt;
+  if(bonus)score+=bonus.center+bonus.steady+bonus.track+bonus.capture;
   if(!success&&Math.floor(score)>maxScore){maxScore=Math.floor(score);saveMaxScore()}
   renderScore();
   plane.pendingHeading=null;
@@ -316,6 +321,8 @@ function update(dt,t){
   const dx=runway.x-plane.x,dy=runway.y-plane.y;
   const dist=Math.hypot(dx,dy);
   const position=coursePosition(plane.x,plane.y);
+  plane.limitTrackSamples.push({dt,along:position.along,side:position.side});plane.limitTrackSeconds+=dt;
+  while(plane.limitTrackSeconds>3&&plane.limitTrackSamples.length>1){const old=plane.limitTrackSamples.shift();plane.limitTrackSeconds-=old.dt}
   const sharpTurn=dt>0&&position.along>=-finalCourseLength&&position.along<-.02&&Math.abs(turn)/dt>30;
   if(sharpTurn){
     plane.sharpTurnSeconds+=dt;
@@ -328,24 +335,13 @@ function update(dt,t){
     plane.sharpTurnSeconds=0;
     plane.sharpTurnCharged=false;
   }
-  if(position.along<-.3){
-    plane.preFinalTurn+=Math.abs(turn);
-    plane.maxPreFinalError=Math.max(plane.maxPreFinalError,headingError(plane.h));
-  }
-  if(dt>0&&position.along>=-.18&&position.along<-.02){
+  if(dt>0&&position.along>=-.2&&position.along<-.02){
     const turnPenalty=clamp(Math.abs(turn)/dt/18,0,1);
-    const driftPenalty=clamp(Math.abs(position.side-plane.lastSide)/dt/.025,0,1);
-    const penalty=dt*(turnPenalty*.6+driftPenalty*.4);
-    plane.steadySamples.push({dt,penalty});
+    const alignmentPenalty=clamp(headingError(plane.h)/30,0,1);
+    const penalty=dt*(alignmentPenalty*.6+turnPenalty*.4);
     plane.steadyPenalty+=penalty;
     plane.steadySeconds+=dt;
-    while(plane.steadySeconds>6&&plane.steadySamples.length>1){
-      const old=plane.steadySamples.shift();
-      plane.steadySeconds-=old.dt;
-      plane.steadyPenalty-=old.penalty;
-    }
   }
-  plane.lastSide=position.side;
   if(position.along>=-.02){
     const onRunway=position.along<.016&&Math.abs(position.side)<runway.halfWidth&&headingError(plane.h)<27;
     end(onRunway,'MISSED APPROACH.');return;
