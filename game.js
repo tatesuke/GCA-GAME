@@ -152,8 +152,9 @@ function releaseHeading(command){
 }
 function courseAdvisory(){
   const position=coursePosition(plane.x,plane.y),offset=position.side,absolute=Math.abs(offset);
+  const onCourse=absolute<localizerWidth(position.along);
   let course;
-  if(absolute<localizerWidth(position.along))course='ON COURSE';
+  if(onCourse)course='ON COURSE';
   else{
     const side=offset<0?'LEFT':'RIGHT';
     const degree=absolute>runway.halfWidth*1.5?'WELL ':absolute<runway.halfWidth?'SLIGHTLY ':'';
@@ -352,7 +353,7 @@ function update(dt,t){
   if(position.along<-approachStartDistance-.2||Math.abs(position.side)>.65){end(false);return}
   const approachMiles=Math.max(0,-position.along*rangeScale);
   const distanceDue=plane.nextDistanceCall>=2&&approachMiles<=plane.nextDistanceCall;
-  const distanceSoon=plane.nextDistanceCall>=2&&approachMiles<=plane.nextDistanceCall+1.5;
+  const distanceSoon=plane.nextDistanceCall>=2&&approachMiles<=plane.nextDistanceCall+.6;
   const advisoryBusy=['course','distance'].includes(activeRadio?.kind)||radioQueue.some(entry=>entry.kind==='course'||entry.kind==='distance');
   const regularAdvisoryDue=!distanceSoon&&t-plane.lastCourseCall>=4000&&t-plane.lastCommandAt>=2500;
   if(!plane.pendingHeading&&!advisoryBusy&&position.along>-approachStartDistance+.03&&(distanceDue||regularAdvisoryDue)){courseAdvisory();plane.lastCourseCall=t}
