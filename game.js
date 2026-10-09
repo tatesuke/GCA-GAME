@@ -45,6 +45,7 @@ const scoringReferenceSpeed=.024;
 const reduceRadarMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
 const goAroundPenalty=100,sharpTurnPenalty=40;
 let selected = 90, plane, score = 0, landings = 0, misses = 0, goArounds = 0, playing = false, lastTime = 0, sweep = 0, messageUntil = 0, nextCallsign = 0, elapsed = 0;
+const radarScanMs=4000;
 const maxScoreKey='gca.bestCompletedRun';
 const maxLandingsKey='gca.bestLandings';
 let maxScore=0,maxLandings=0;
@@ -85,7 +86,17 @@ const aircraftTypes = [
   {key:'business',name:'Business jet',speed:.026,turnRate:34,traits:'Very fast / Moderate turns'},
   {key:'fighter',name:'Fighter jet',speed:.0295,turnRate:72,traits:'Fastest / Agile turns'}
 ];
+const settingsKey='gca.settings';
+const defaultSettings={compassGuide:true,showPoints:true,showWind:true,refreshMs:0,aircraftShape:true,aircraft:['helicopter','light','heavy'],calmWind:false};
+let settings={...defaultSettings,aircraft:[...defaultSettings.aircraft]};
+try{
+  const saved=JSON.parse(localStorage.getItem(settingsKey));
+  if(saved&&typeof saved==='object')settings={...settings,...saved,aircraft:Array.isArray(saved.aircraft)&&saved.aircraft.length?saved.aircraft:[...defaultSettings.aircraft]};
+}catch{}
 const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+settings.refreshMs=clamp(Number(settings.refreshMs)||0,0,10000);
+settings.aircraft=settings.aircraft.filter(key=>aircraftTypes.some(type=>type.key===key));
+if(!settings.aircraft.length)settings.aircraft=[...defaultSettings.aircraft];
 const norm = a=>(a%360+360)%360;
 const rad = a=>a*Math.PI/180;
 const coursePoint=(along,side=0)=>({x:runway.x+along*Math.sin(rad(runway.heading))+side*Math.cos(rad(runway.heading)),y:runway.y-along*Math.cos(rad(runway.heading))+side*Math.sin(rad(runway.heading))});
@@ -190,6 +201,7 @@ function updateWindDisplay(){
   wind.knots=Math.round(wind.shownSpeed);
 }
 function updateWind(dt,t){
+  if(settings.calmWind){wind.speed=wind.targetSpeed=wind.shownSpeed=wind.knots=wind.x=wind.y=0;return}
   const directionRate=Math.min(3+landings*3,30);
   if(t>=wind.nextShift){
     const directionRange=Math.min(8+landings*10+landings*landings*2,180);
@@ -266,6 +278,7 @@ function newPlane(retry=false){
   }else{
     wind.targetSpeed=clamp(wind.targetSpeed,wind.minKnots,wind.maxKnots);
   }
+  if(settings.calmWind)wind.speed=wind.targetSpeed=wind.shownSpeed=wind.knots=wind.x=wind.y=0;
   wind.nextShift=performance.now()+2500+Math.random()*1500;
   wind.lastDisplay=0;
   updateWindDisplay();
@@ -273,14 +286,16 @@ function newPlane(retry=false){
   const side=variant%2===0?-.16:.16;
   const startPoint=coursePoint(-approachStartDistance,side);
   const s={...startPoint,h:norm(runway.heading+(side<0?25:-25))};
-  const type=retry?previous.type:aircraftTypes[Math.floor(Math.random()*aircraftTypes.length)];
-  plane={x:s.x,y:s.y,h:s.h,target:s.h,call:retry?previous.call:callsigns[(nextCallsign-1)%callsigns.length],type,variant,trail:[],speed:type.speed+Math.min(landings,6)*.0008,lastTrail:0,lastCourseCall:performance.now(),lastCommandAt:0,lastCourseAbs:null,nextDistanceCall:8,centerSeconds:0,centerMissSeconds:0,captureSeconds:0,courseCaptured:false,scoringZone:'OFF PATH',currentPointRate:0,currentMultiplier:1,pendingHeading:null,steadySeconds:0,steadyPenalty:0,limitTrackSamples:[],limitTrackSeconds:0,sharpTurnSeconds:0,sharpTurnCharged:false};
+  const availableTypes=aircraftTypes.filter(item=>settings.aircraft.includes(item.key));
+  const type=retry?previous.type:availableTypes[Math.floor(Math.random()*availableTypes.length)];
+  const detectedAt=performance.now();
+  plane={x:s.x,y:s.y,h:s.h,target:s.h,call:retry?previous.call:callsigns[(nextCallsign-1)%callsigns.length],type,variant,trail:[],radarReturn:{x:s.x,y:s.y,h:s.h,detectedAt},lastTrail:detectedAt,speed:type.speed+Math.min(landings,6)*.0008,lastCourseCall:performance.now(),lastCommandAt:0,lastCourseAbs:null,nextDistanceCall:8,centerSeconds:0,centerMissSeconds:0,captureSeconds:0,courseCaptured:false,scoringZone:'OFF PATH',currentPointRate:0,currentMultiplier:1,pendingHeading:null,steadySeconds:0,steadyPenalty:0,limitTrackSamples:[],limitTrackSeconds:0,sharpTurnSeconds:0,sharpTurnCharged:false};
   $('locStatus').textContent='LOC · ACQUIRE';
   $('locStatus').classList.remove('established');
   $('aircraftType').textContent=type.name;
   setSelected(Math.round(s.h/5)*5);
-  ui.note.textContent=`${type.name}: ${type.traits}. Wind changes during flight.`;
-  const contact=`RADAR CONTACT. WIND FROM ${fmt(wind.direction+180)}, ${wind.knots} KNOTS.`;
+  ui.note.textContent=`${type.name}: ${type.traits}. ${settings.calmWind?'Calm wind mode.':'Wind changes during flight.'}`;
+  const contact=settings.calmWind?'RADAR CONTACT. WIND CALM.':`RADAR CONTACT. WIND FROM ${fmt(wind.direction+180)}, ${wind.knots} KNOTS.`;
   const spokenCall=plane.call.replace(/\d{3}/,digits=>digits.split('').map(d=>radioDigits[Number(d)]).join(' '));
   if(retry)showMessage(`GO AROUND ${goArounds}. -${goAroundPenalty} POINTS. RETURN FOR ANOTHER APPROACH.`,5);
   else showMessage(`${plane.call}, ${contact}`,5,`${spokenCall}, ${contact}`);
@@ -309,7 +324,7 @@ function end(success,reason='MISSED APPROACH.'){
   else{misses++;showMessage(reason,10);setTimeout(()=>{if(!playing)showDialog('missed',start,plane.call)},650)}
 }
 function update(dt,t){
-  if(!plane||!playing||!ui.overlay.hidden)return;
+  if(!plane||!playing||!ui.overlay.hidden||!$('settingsOverlay').hidden)return;
   elapsed+=dt;$('clock').textContent=`${String(Math.floor(elapsed/60)).padStart(2,'0')}:${String(Math.floor(elapsed%60)).padStart(2,'0')}`;
   updateWind(dt,t);
   const diff=((plane.target-plane.h+540)%360)-180;
@@ -320,7 +335,6 @@ function update(dt,t){
   plane.x+=wind.x*dt;
   plane.y+=wind.y*dt;
   updateLocalizer(dt);
-  if(t-plane.lastTrail>180){plane.trail.push({x:plane.x,y:plane.y});if(plane.trail.length>90)plane.trail.shift();plane.lastTrail=t}
   const dx=runway.x-plane.x,dy=runway.y-plane.y;
   const dist=Math.hypot(dx,dy);
   const position=coursePosition(plane.x,plane.y);
@@ -357,7 +371,7 @@ function update(dt,t){
   const regularAdvisoryDue=!distanceSoon&&t-plane.lastCourseCall>=4000&&t-plane.lastCommandAt>=2500;
   if(!plane.pendingHeading&&!advisoryBusy&&position.along>-approachStartDistance+.03&&(distanceDue||regularAdvisoryDue)){courseAdvisory();plane.lastCourseCall=t}
   const runwayBearing=norm(Math.atan2(runway.x-plane.x,plane.y-runway.y)*180/Math.PI);
-  ui.range.textContent=(dist*rangeScale).toFixed(1);ui.heading.textContent=fmt(plane.h);ui.currentPointer.style.transform=`rotate(${plane.h+180}deg)`;ui.currentPointer.hidden=false;ui.runwayGuide.style.transform=`rotate(${runwayBearing}deg)`;ui.runwayGuide.hidden=false;ui.dial.setAttribute('aria-valuetext',`Selected ${fmt(selected)} degrees, current ${fmt(plane.h)} degrees, runway ${fmt(runwayBearing)} degrees`);ui.callsign.textContent=plane.call;renderScore();
+  ui.range.textContent=(dist*rangeScale).toFixed(1);ui.heading.textContent=fmt(plane.h);ui.currentPointer.style.transform=`rotate(${plane.h+180}deg)`;ui.currentPointer.hidden=false;ui.runwayGuide.style.transform=`rotate(${runwayBearing}deg)`;ui.runwayGuide.hidden=!settings.compassGuide;ui.dial.setAttribute('aria-valuetext',`Selected ${fmt(selected)} degrees, current ${fmt(plane.h)} degrees, runway ${fmt(runwayBearing)} degrees`);ui.callsign.textContent=plane.call;renderScore();
 }
 function resize(){const r=canvas.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(r.width*d);canvas.height=Math.round(r.height*d);ctx.setTransform(d,0,0,d,0,0)}
 function resetRadar(){const center=coursePoint(-approachStartDistance/2);camera.x=center.x;camera.y=center.y;camera.zoom=.72}
@@ -397,30 +411,39 @@ function draw(t){const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)retu
   const runwayA=pixel(0,-runwayVisualHalfWidth),runwayB=pixel(runwayLength,-runwayVisualHalfWidth),runwayC=pixel(runwayLength,runwayVisualHalfWidth),runwayD=pixel(0,runwayVisualHalfWidth);ctx.fillStyle='#b7d7bb18';ctx.strokeStyle='#8fb998';path([runwayA,runwayB,runwayC,runwayD],true);ctx.fill();ctx.stroke();
   const thresholdA=pixel(0,-runwayVisualHalfWidth),thresholdB=pixel(0,runwayVisualHalfWidth);ctx.strokeStyle='#d3f7bb';ctx.lineWidth=3;path([thresholdA,thresholdB]);ctx.stroke();ctx.lineWidth=1;
   const gateA=pixel(-guidanceLimitDistance,-runway.halfWidth),gateB=pixel(-guidanceLimitDistance,runway.halfWidth);ctx.strokeStyle='#d3f7bb';ctx.setLineDash([3,4]);path([gateA,gateB]);ctx.stroke();ctx.setLineDash([]);
-  const gateLabel=pixel(-guidanceLimitDistance,-runway.halfWidth-.015);ctx.fillStyle='#d3f7bb';ctx.font='9px DM Mono, monospace';ctx.fillText(`GUIDANCE LIMIT · ${(guidanceLimitDistance*rangeScale).toFixed(1)} NM`,gateLabel.x,gateLabel.y);
   const antenna=pixel(localizerOrigin);ctx.fillStyle='#f2bd78';ctx.beginPath();ctx.arc(antenna.x,antenna.y,3,0,Math.PI*2);ctx.fill();
   const runwayLabel=pixel(.02,-runwayVisualHalfWidth-.012);ctx.fillStyle='#a2d89a';ctx.fillText(`RWY ${String(Math.round(runway.heading/10)%36).padStart(2,'0')}`,runwayLabel.x,runwayLabel.y);
-  sweep=(t*.00035)%(Math.PI*2);const grad=ctx.createConicGradient(sweep,cx,cy);grad.addColorStop(0,'#9df6a900');grad.addColorStop(.94,'#9df6a900');grad.addColorStop(1,'#9df6a924');ctx.fillStyle=grad;ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#92e69b44';ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(sweep)*R,cy+Math.sin(sweep)*R);ctx.stroke();ctx.restore();
+  sweep=(t/radarScanMs*Math.PI*2)%(Math.PI*2);const grad=ctx.createConicGradient(sweep,cx,cy);grad.addColorStop(0,'#9df6a900');grad.addColorStop(.94,'#9df6a900');grad.addColorStop(1,'#9df6a924');ctx.fillStyle=grad;ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#92e69b44';ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(sweep)*R,cy+Math.sin(sweep)*R);ctx.stroke();ctx.restore();
   if(plane){
+    if(settings.refreshMs===0||t-plane.radarReturn.detectedAt>=settings.refreshMs){
+      plane.radarReturn={x:plane.x,y:plane.y,h:plane.h,detectedAt:t};
+    }
+    if(t-plane.lastTrail>=Math.max(settings.refreshMs,180)){
+      plane.trail.push({x:plane.radarReturn.x,y:plane.radarReturn.y});
+      const maxTrailPoints=Math.max(2,Math.ceil(16200/Math.max(settings.refreshMs,180)));
+      while(plane.trail.length>maxTrailPoints)plane.trail.shift();
+      plane.lastTrail=t;
+    }
     ctx.save();
-    const x=plane.x*w,y=plane.y*h;
+    const radarReturn=plane.radarReturn||plane;
+    const x=radarReturn.x*w,y=radarReturn.y*h;
     plane.trail.forEach((p,i)=>{ctx.fillStyle=`rgba(174,236,158,${i/plane.trail.length*.45})`;ctx.fillRect(p.x*w-1,p.y*h-1,2,2)});
-    ctx.translate(x,y);ctx.rotate(rad(plane.h));ctx.shadowBlur=16;ctx.shadowColor='#c4ffb7';ctx.fillStyle='#d1ffbf';drawAircraftSymbol(plane.type.key);ctx.shadowBlur=0;ctx.restore();
-    const arrowX=x-18,arrowY=y;
+    ctx.translate(x,y);ctx.rotate(rad(radarReturn.h));ctx.shadowBlur=16;ctx.shadowColor='#c4ffb7';ctx.fillStyle='#d1ffbf';ctx.globalAlpha=settings.refreshMs===0?1:.82+.18*clamp(1-(t-radarReturn.detectedAt)/1200,0,1);if(settings.aircraftShape)drawAircraftSymbol(plane.type.key);else{ctx.beginPath();ctx.arc(0,0,3,0,Math.PI*2);ctx.fill()}ctx.shadowBlur=0;ctx.restore();
+    if(settings.showWind&&!settings.calmWind){const arrowX=x-18,arrowY=y;
     const arrowLength=12+Math.min(wind.shownSpeed,25)*2;
     const windX=Math.sin(rad(wind.shownDirection))*arrowLength;
     const windY=-Math.cos(rad(wind.shownDirection))*arrowLength;
     const tipX=arrowX+windX,tipY=arrowY+windY,angle=Math.atan2(windY,windX);
     ctx.strokeStyle='#f1ab6b';ctx.fillStyle='#f1ab6b';ctx.lineWidth=2;
     ctx.beginPath();ctx.moveTo(arrowX,arrowY);ctx.lineTo(tipX,tipY);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(tipX,tipY);ctx.lineTo(tipX-7*Math.cos(angle-.5),tipY-7*Math.sin(angle-.5));ctx.lineTo(tipX-7*Math.cos(angle+.5),tipY-7*Math.sin(angle+.5));ctx.closePath();ctx.fill();
+    ctx.beginPath();ctx.moveTo(tipX,tipY);ctx.lineTo(tipX-7*Math.cos(angle-.5),tipY-7*Math.sin(angle-.5));ctx.lineTo(tipX-7*Math.cos(angle+.5),tipY-7*Math.sin(angle+.5));ctx.closePath();ctx.fill()}
     const labelSide=x>w-145?-1:1,labelX=x+24*labelSide;ctx.textAlign=labelSide<0?'right':'left';
     ctx.strokeStyle='#a6dba2';ctx.beginPath();ctx.moveTo(x+8*labelSide,y-8);ctx.lineTo(x+21*labelSide,y-21);ctx.lineTo(x+88*labelSide,y-21);ctx.stroke();ctx.fillStyle='#d5f4cb';ctx.font='11px DM Mono, monospace';ctx.fillText(plane.call,labelX,y-26);
-    const scoring=plane.scoringZone!=='OFF PATH',centerScoring=plane.scoringZone==='CENTER';
+    if(settings.showPoints){const scoring=plane.scoringZone!=='OFF PATH',centerScoring=plane.scoringZone==='CENTER';
     const scoringPulse=centerScoring&&!reduceRadarMotion ? .9+.1*(.5+.5*Math.sin(t*.014)) : 1;
     ctx.save();ctx.globalAlpha=scoring?scoringPulse:.55;ctx.fillStyle=centerScoring?'#caffb9':plane.scoringZone==='NARROW'?'#91dfa0':plane.scoringZone==='WIDE'?'#f2bd78':'#789b88';ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=centerScoring?10:scoring?5:0;ctx.font=`700 ${centerScoring?12:10}px DM Mono, monospace`;
     const multiplier=`×${plane.currentMultiplier.toFixed(1)}`;ctx.fillText(`+${Math.round(plane.currentPointRate)} PT/s  ${multiplier}`,labelX,y-10);
-    if(centerScoring){const progress=clamp(plane.centerSeconds/requiredCenterSeconds,0,1),barWidth=76,barX=labelSide<0?labelX-barWidth:labelX,barY=y-4;ctx.shadowBlur=0;ctx.globalAlpha=.8;ctx.fillStyle='#173c2a';ctx.fillRect(barX,barY,barWidth,4);ctx.fillStyle='#baffaa';ctx.fillRect(barX,barY,barWidth*progress,4);ctx.strokeStyle='#8acb8799';ctx.lineWidth=1;ctx.strokeRect(barX-.5,barY-.5,barWidth+1,5)}ctx.restore();ctx.textAlign='left';
+    if(centerScoring){const progress=clamp(plane.centerSeconds/requiredCenterSeconds,0,1),barWidth=76,barX=labelSide<0?labelX-barWidth:labelX,barY=y-4;ctx.shadowBlur=0;ctx.globalAlpha=.8;ctx.fillStyle='#173c2a';ctx.fillRect(barX,barY,barWidth,4);ctx.fillStyle='#baffaa';ctx.fillRect(barX,barY,barWidth*progress,4);ctx.strokeStyle='#8acb8799';ctx.lineWidth=1;ctx.strokeRect(barX-.5,barY-.5,barWidth+1,5)}ctx.restore()}ctx.textAlign='left';
   }
   ctx.restore();
 }
@@ -463,6 +486,37 @@ $('issue').onclick=()=>{
 $('voiceButton').onclick=$('modalVoiceButton').onclick=()=>{voiceEnabled=!voiceEnabled;$('voiceButton').textContent=voiceEnabled?'VOICE ON':'VOICE OFF';$('voiceButton').setAttribute('aria-pressed',String(voiceEnabled));$('modalVoiceButton').textContent=voiceEnabled?'ON':'OFF';$('modalVoiceButton').setAttribute('aria-pressed',String(voiceEnabled));if(!voiceEnabled)clearRadio(true)};
 if(!voiceSupported){$('voiceButton').hidden=true;$('voiceButton').setAttribute('aria-pressed','false')}
 window.addEventListener('resize',()=>{resize();draw(performance.now())});
+function fillSettingsForm(values){
+  $('settingCompassGuide').checked=values.compassGuide;
+  $('settingPoints').checked=values.showPoints;
+  $('settingWindDisplay').checked=values.showWind;
+  $('settingRefreshMs').value=String(values.refreshMs);
+  $('settingAircraftShape').checked=values.aircraftShape;
+  $('settingCalmWind').checked=values.calmWind;
+  document.querySelectorAll('input[name="aircraftType"]').forEach(input=>input.checked=values.aircraft.includes(input.value));
+}
+function openSettings(){
+  fillSettingsForm(settings);
+  $('settingsError').textContent='';
+  $('settingsOverlay').hidden=false;
+}
+function saveSettings(){
+  const aircraft=[...document.querySelectorAll('input[name="aircraftType"]:checked')].map(input=>input.value);
+  if(!aircraft.length){$('settingsError').textContent='出現機体を1種類以上選んでください。';return}
+  const wasCalm=settings.calmWind;
+  settings={compassGuide:$('settingCompassGuide').checked,showPoints:$('settingPoints').checked,showWind:$('settingWindDisplay').checked,refreshMs:clamp(Number($('settingRefreshMs').value)||0,0,10000),aircraftShape:$('settingAircraftShape').checked,aircraft,calmWind:$('settingCalmWind').checked};
+  try{localStorage.setItem(settingsKey,JSON.stringify(settings))}catch{}
+  if(wasCalm&&!settings.calmWind)wind.initialized=false;
+  if(settings.calmWind)wind.speed=wind.targetSpeed=wind.shownSpeed=wind.knots=wind.x=wind.y=0;
+  ui.runwayGuide.hidden=!settings.compassGuide;
+  $('settingsOverlay').hidden=true;
+  lastTime=performance.now();
+  draw(lastTime);
+}
+$('settingsButton').onclick=openSettings;
+$('settingsClose').onclick=saveSettings;
+$('settingsReset').onclick=()=>{fillSettingsForm(defaultSettings);$('settingsError').textContent='デフォルト設定に戻しました。保存して閉じると反映されます。'};
+$('settingsOverlay').addEventListener('pointerdown',event=>{if(event.target===$('settingsOverlay'))saveSettings()});
 // Keep the instructions tied to the current approach direction.
 $('helpButton').onclick=()=>showDialog('help',()=>{ui.overlay.hidden=true;lastTime=performance.now()});
 setSelected(90);renderScore();resize();draw(0);
