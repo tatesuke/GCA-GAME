@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>SpeechSynthesis 試験ページ — TinyGCA</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; background: #071310; color: #d7efe3; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 28px 16px; }
+    main { max-width: 720px; margin: auto; }
+    h1 { margin: 0 0 8px; font-size: 1.7rem; }
+    p { color: #a9c3b0; line-height: 1.5; }
+    .panel { background: #10241a; border: 1px solid #42664b; border-radius: 8px; padding: 20px; margin: 22px 0; }
+    label { display: block; margin: 18px 0 7px; font-weight: 600; }
+    select, textarea, input[type="number"] { width: 100%; border: 1px solid #63836a; border-radius: 4px; background: #071a10; color: inherit; font: inherit; padding: 9px; }
+    textarea { min-height: 130px; resize: vertical; line-height: 1.5; }
+    .slider { display: grid; grid-template-columns: minmax(0, 1fr) 82px; gap: 12px; align-items: center; }
+    input[type="range"] { width: 100%; accent-color: #b6edab; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+    button { padding: 10px 17px; border: 1px solid #709678; border-radius: 4px; background: #193322; color: inherit; font: inherit; cursor: pointer; }
+    button.primary { background: #b6edab; color: #102319; border-color: #d4ffd1; font-weight: 700; }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    :focus-visible { outline: 2px solid #c5ffc2; outline-offset: 3px; }
+    #status { min-height: 1.5em; margin-top: 18px; color: #b6edab; }
+    small { color: #91ad9a; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>SpeechSynthesis 試験ページ</h1>
+    <p>TinyGCA の無線音声を、ブラウザの読み上げ機能で試します。声の種類や各値は再生前に変更できます。</p>
+    <div class="panel">
+      <label for="text">読み上げ文</label>
+      <textarea id="text">SIM 204, turn left heading zero niner zero. Cleared to land runway zero niner.</textarea>
+
+      <label for="voice">声</label>
+      <select id="voice"><option value="">ブラウザの既定の声</option></select>
+      <small id="voiceCount">利用可能な声を読み込み中…</small>
+
+      <label for="rate">速度 <small>（0.1–10、ゲームの既定値 0.94）</small></label>
+      <div class="slider"><input id="rate" type="range" min="0.1" max="10" step="0.01" value="0.94"><input id="rateNumber" type="number" min="0.1" max="10" step="0.01" value="0.94" aria-label="速度の数値"></div>
+
+      <label for="pitch">ピッチ <small>（0–2、ゲームの既定値 0.88）</small></label>
+      <div class="slider"><input id="pitch" type="range" min="0" max="2" step="0.01" value="0.88"><input id="pitchNumber" type="number" min="0" max="2" step="0.01" value="0.88" aria-label="ピッチの数値"></div>
+
+      <label for="volume">音量 <small>（0–1）</small></label>
+      <div class="slider"><input id="volume" type="range" min="0" max="1" step="0.01" value="1"><input id="volumeNumber" type="number" min="0" max="1" step="0.01" value="1" aria-label="音量の数値"></div>
+
+      <div class="actions">
+        <button id="play" class="primary" type="button">読み上げる</button>
+        <button id="pause" type="button">一時停止</button>
+        <button id="resume" type="button">再開</button>
+        <button id="stop" type="button">停止</button>
+        <button id="reset" type="button">既定値に戻す</button>
+      </div>
+      <div id="status" role="status" aria-live="polite">準備完了</div>
+    </div>
+    <p><small>音声の種類や読み上げ結果は、OS とブラウザによって異なります。</small></p>
+  </main>
+  <script>
+    const supported = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+    const synth = supported ? window.speechSynthesis : null;
+    const $ = id => document.getElementById(id);
+    const status = message => { $('status').textContent = message; };
+    const textStorageKey = 'tinygca.speechTest.text';
+    try {
+      const savedText = localStorage.getItem(textStorageKey);
+      if (savedText !== null) $('text').value = savedText;
+    } catch {}
+    $('text').addEventListener('input', () => {
+      try { localStorage.setItem(textStorageKey, $('text').value); } catch {}
+    });
+    let voices = [];
+    let current = null;
+
+    for (const [id, min, max] of [['rate', .1, 10], ['pitch', 0, 2], ['volume', 0, 1]]) {
+      const range = $(id);
+      const number = $(id + 'Number');
+      range.addEventListener('input', () => { number.value = range.value; });
+      number.addEventListener('input', () => {
+        if (number.value === '') return;
+        const value = Number(number.value);
+        if (Number.isFinite(value)) range.value = Math.min(max, Math.max(min, value));
+      });
+      number.addEventListener('change', () => { number.value = range.value; });
+    }
+
+    function loadVoices() {
+      if (!supported) return;
+      const previous = $('voice').value;
+      voices = synth.getVoices();
+      $('voice').replaceChildren(new Option('ブラウザの既定の声', ''));
+      voices.forEach((voice, index) => {
+        $('voice').add(new Option(`${voice.name} (${voice.lang})${voice.default ? ' — 既定' : ''}`, String(index)));
+      });
+      if (previous && voices[Number(previous)]) $('voice').value = previous;
+      $('voiceCount').textContent = `${voices.length} 件の声を利用できます`;
+    }
+
+    if (supported) {
+      loadVoices();
+      synth.addEventListener('voiceschanged', loadVoices);
+    } else {
+      status('このブラウザは SpeechSynthesis に対応していません。');
+      $('voiceCount').textContent = '利用できません';
+      for (const id of ['play', 'pause', 'resume', 'stop']) $(id).disabled = true;
+    }
+
+    $('play').addEventListener('click', () => {
+      const text = $('text').value.trim();
+      if (!text) { status('読み上げ文を入力してください。'); return; }
+      synth.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      const selected = $('voice').value;
+      if (selected !== '' && voices[Number(selected)]) utterance.voice = voices[Number(selected)];
+      utterance.lang = utterance.voice?.lang || 'en-US';
+      utterance.rate = Number($('rate').value);
+      utterance.pitch = Number($('pitch').value);
+      utterance.volume = Number($('volume').value);
+      current = utterance;
+      utterance.onstart = () => { if (current === utterance) status('読み上げ中'); };
+      utterance.onend = () => { if (current === utterance) { current = null; status('読み上げ完了'); } };
+      utterance.onerror = event => { if (current === utterance) { current = null; status(`読み上げエラー: ${event.error}`); } };
+      try { synth.speak(utterance); status('読み上げを開始しています…'); }
+      catch (error) { current = null; status(`読み上げに失敗しました: ${error.message}`); }
+    });
+    $('pause').addEventListener('click', () => { synth.pause(); status('一時停止中'); });
+    $('resume').addEventListener('click', () => { synth.resume(); status('読み上げ中'); });
+    $('stop').addEventListener('click', () => { current = null; synth.cancel(); status('停止しました'); });
+    $('reset').addEventListener('click', () => {
+      $('voice').value = '';
+      for (const [id, value] of [['rate', '0.94'], ['pitch', '0.88'], ['volume', '1']]) {
+        $(id).value = value;
+        $(id + 'Number').value = value;
+      }
+      status('既定値に戻しました');
+    });
+  </script>
+</body>
+</html>

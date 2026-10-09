@@ -8,16 +8,16 @@ document.documentElement.lang=language;
 let activeDialog=null;
 const dialogCopy={
   briefing:{
-    en:['BRIEFING','Start Control','You are the controller for the final approach. Give the aircraft a heading and guide it to the runway.','Score points while flying in the approach path. The narrow green path pays more than the wider amber path, with rates adjusted for aircraft speed. Stay in the narrow path for <strong>7 continuous seconds</strong> to earn double points there.<br>Turn the dial and tap Send Heading.','Start Control →'],
-    ja:['ブリーフィング','管制開始','あなたは最終進入の管制官です。航空機に方位を指示し、滑走路まで誘導してください。','進入経路内を飛ぶと得点が入ります。狭い緑の経路は広い琥珀色の経路より高得点で、得点率は機体の速度に応じて変わります。緑の経路に<strong>連続7秒間</strong>とどまると、そこでの得点が2倍になります。<br>ダイヤルを回して「Send Heading」を押してください。','管制開始 →']
+    en:['BRIEFING','Start Control','You are the controller for the final approach. Give the aircraft a heading and guide it to the runway.','Score points while flying in the approach path. The centerline pays the most, and its multiplier builds while you track it steadily. Keep the aircraft aligned with the runway for the full reward.<br>Turn the dial and tap Send Heading.','Start Control →'],
+    ja:['ブリーフィング','管制開始','あなたは最終進入の管制官です。航空機に方位を指示し、滑走路まで誘導してください。','進入経路内を飛ぶと得点が入ります。中心線は最も高得点で、安定してなぞるほど倍率が上がります。滑走路の方位に機体を合わせると最大の報酬を得られます。<br>ダイヤルを回して「Send Heading」を押してください。','管制開始 →']
   },
   help:{
-    en:['HOW TO PLAY','How to Play','Guide the aircraft to the runway.','1. Turn the dial to choose a heading, then send it. Use the 5-degree buttons for small changes; RESET restores the instructed heading.<br>2. Stay in the narrow green path for more points, or the wider amber path for fewer points. Rates scale with aircraft speed: initially about 12/s for a helicopter, 16/s for a light plane, and 20/s for a heavy plane in the narrow path.<br>3. Stay in the narrow path for 7 continuous seconds to double its rate. Leaving the narrow path resets the streak.<br><br>Landing bonuses: up to 200 for touching down near the center, up to 160 for a steady final approach, and 40 for recovering from a large turn before final approach.<br><br>GO AROUND retries the same plane for a 100-point penalty. A sustained sharp turn on final approach costs 40 points. Score stops at zero. LANDINGS counts successful approaches in this run; BEST is the highest final score when a run ends in a missed approach.','Back to Game →'],
-    ja:['遊び方','遊び方','航空機を滑走路まで誘導してください。','1. ダイヤルで方位を選び、Send Headingで指示します。5度ボタンで微調整できます。RESETで現在指示している方位に戻せます。<br>2. 狭い緑の経路では高得点、広い琥珀色の経路では低めの得点が入ります。得点率は機体の速度に応じて変わり、緑の経路では当初、ヘリコプターが約12点/秒、軽飛行機が約16点/秒、大型機が約20点/秒です。<br>3. 緑の経路に連続7秒間とどまると得点率が2倍になります。経路を外れると連続時間はリセットされます。<br><br>着陸ボーナス：中心付近への着陸で最大200点、安定した最終進入で最大160点、最終進入前の大きな旋回から立て直すと40点。<br><br>GO AROUNDは100点を消費して同じ機体でやり直します。最終進入中に急旋回を続けると40点減点されます。得点は0点未満になりません。LANDINGSは今回成功した着陸数、BESTはミストアプローチで終了した時点の最高得点です。','ゲームに戻る →']
+    en:['HOW TO PLAY','How to Play','Guide the aircraft to the runway.','1. Turn the dial to choose a heading, then send it. Use the 5-degree buttons for small changes; RESET restores the instructed heading.<br>2. The amber path earns points, the narrow green path earns more, and tracking the centerline earns the most. Holding the centerline steadily builds its multiplier.<br>3. Guidance ends shortly before the runway. Your final bonus rewards a projected crossing near the center of the runway threshold, a stable approach, a ground track parallel to the runway, and a clean capture of the narrow course. Stability is worth more than a late correction toward the center.<br><br>GO AROUND retries the same plane with a score penalty. Sustained sharp turns on final approach also cost points. Score stops at zero. LANDINGS counts successful approaches in this run; BEST is the highest final score when a run ends in a missed approach.','Back to Game →'],
+    ja:['遊び方','遊び方','航空機を滑走路まで誘導してください。','1. ダイヤルで方位を選び、Send Headingで指示します。5度ボタンで微調整できます。RESETで現在指示している方位に戻せます。<br>2. 琥珀色の経路では得点が入り、狭い緑の経路ではより高く、中心線をなぞると最も高くなります。中心線を安定して維持すると倍率が上がります。<br>3. 誘導は滑走路の少し手前で終了します。最後のボーナスでは、予測される進入端の通過位置が中心に近いこと、安定して進入していること、対地航跡が滑走路と平行であること、狭い経路をきれいに捕捉できたことが評価されます。終盤に中心へ無理に寄せるより、安定した進入のほうが高く評価されます。<br><br>GO AROUNDは得点を消費して同じ機体でやり直します。最終進入中に急旋回を続けた場合も減点されます。得点は0点未満になりません。LANDINGSは今回成功した進入数、BESTはミストアプローチで終了した時点の最高得点です。','ゲームに戻る →']
   },
   landing:{
-    en:['TOUCHDOWN','Safe Landing',call=>`You guided ${call} to the runway.`,b=>`Center: <strong>+${b.center}</strong> | Straight: <strong>+${b.steady}</strong> | Stunt: <strong>+${b.stunt}</strong><br>Score: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | Landings: <strong>${landings}</strong> | Go-arounds: <strong>${goArounds}</strong>`,'Next Plane →'],
-    ja:['TOUCHDOWN','Safe Landing',call=>`${call}を滑走路まで誘導しました。`,b=>`中心: <strong>+${b.center}</strong> | 安定進入: <strong>+${b.steady}</strong> | 立て直し: <strong>+${b.stunt}</strong><br>得点: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | 着陸: <strong>${landings}</strong> | ゴーアラウンド: <strong>${goArounds}</strong>`,'次の機体 →']
+    en:['VISUAL HANDOFF','Guidance Complete',call=>`${call} reached the visual handoff point.`,b=>`Threshold: <strong>+${b.threshold}</strong> | Stable: <strong>+${b.steady}</strong> | Track: <strong>+${b.track}</strong> | Capture: <strong>+${b.capture}</strong><br>Score: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | Landings: <strong>${landings}</strong> | Go-arounds: <strong>${goArounds}</strong>`,'Next Plane →'],
+    ja:['目視移行','誘導完了',call=>`${call}を目視移行地点まで誘導しました。`,b=>`進入端: <strong>+${b.threshold}</strong> | 安定進入: <strong>+${b.steady}</strong> | 進入軌跡: <strong>+${b.track}</strong> | コース捕捉: <strong>+${b.capture}</strong><br>得点: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | 着陸: <strong>${landings}</strong> | ゴーアラウンド: <strong>${goArounds}</strong>`,'次の機体 →']
   },
   missed:{
     en:['MISSED APPROACH','Approach Missed',call=>`${call} left the control area. Try guiding the plane again.`,()=>`Final score: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | Best score: <strong>${String(maxScore).padStart(4,'0')}</strong><br>Landings: <strong>${landings}</strong> | Best landings: <strong>${maxLandings}</strong> | Go-arounds: <strong>${goArounds}</strong>`,'Try Again →'],
@@ -33,15 +33,19 @@ function showDialog(kind,action,call,bonus){
   $('shareScore').hidden=kind!=='missed'&&kind!=='landing';
 }
 languageSelect.onchange=()=>{language=languageSelect.value;document.documentElement.lang=language;if(activeDialog&&!ui.overlay.hidden)showDialog(activeDialog.kind,activeDialog.action,activeDialog.call,activeDialog.bonus)};
-const ui = {callsign:$('callsign'),range:$('range'),heading:$('heading'),score:$('score'),maxScore:$('maxScore'),landingCount:$('landingCount'),maxLandings:$('maxLandings'),selected:$('selectedHeading'),pointer:$('dialPointer'),dial:$('dial'),message:$('message'),messageText:$('messageText'),note:$('commandNote'),overlay:$('overlay'),modalKicker:$('modalKicker'),modalTitle:$('modalTitle'),modalText:$('modalText'),modalInfo:$('modalInfo'),modalButton:$('modalButton'),radarState:$('radarState')};
+const ui = {callsign:$('callsign'),range:$('range'),heading:$('heading'),score:$('score'),maxScore:$('maxScore'),landingCount:$('landingCount'),maxLandings:$('maxLandings'),selected:$('selectedHeading'),pointer:$('dialPointer'),currentPointer:$('dialCurrentPointer'),runwayGuide:$('dialRunwayGuide'),dial:$('dial'),message:$('message'),messageText:$('messageText'),note:$('commandNote'),overlay:$('overlay'),modalKicker:$('modalKicker'),modalTitle:$('modalTitle'),modalText:$('modalText'),modalInfo:$('modalInfo'),modalButton:$('modalButton')};
 const runway = {x:.5,y:.5,heading:90,halfWidth:.047};
 const camera = {x:.5,y:.5,zoom:1.3};
 const approachStartDistance=.98,finalCourseLength=.85,rangeScale=10;
-const wind = {cross:0,base:0,target:0,max:0,knots:0,nextShift:0,lastDisplay:0};
-const requiredLocSeconds=7;
-const narrowPointsPerSecond=20,broadPointsPerSecond=6;
+const guidanceLimitDistance=.05,runwayLength=.12,localizerOrigin=.15,runwayVisualHalfWidth=.012;
+const wind = {direction:0,targetDirection:0,speed:0,targetSpeed:0,shownDirection:0,shownSpeed:0,minKnots:0,maxKnots:0,knots:0,x:0,y:0,nextShift:0,lastDisplay:0,initialized:false};
+const requiredCenterSeconds=5;
+const centerPointsPerSecond=28,narrowPointsPerSecond=18,broadPointsPerSecond=6;
+const scoringReferenceSpeed=.024;
+const reduceRadarMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
 const goAroundPenalty=100,sharpTurnPenalty=40;
 let selected = 90, plane, score = 0, landings = 0, misses = 0, goArounds = 0, playing = false, lastTime = 0, sweep = 0, messageUntil = 0, nextCallsign = 0, elapsed = 0;
+const radarScanMs=4000;
 const maxScoreKey='gca.bestCompletedRun';
 const maxLandingsKey='gca.bestLandings';
 let maxScore=0,maxLandings=0;
@@ -76,11 +80,23 @@ let voiceEnabled=voiceSupported;
 let activeRadio=null,radioQueue=[];
 const callsigns = ['SIM 204','SIM 731','SIM 118','SIM 562','SIM 426','SIM 083','SIM 319'];
 const aircraftTypes = [
-  {key:'helicopter',name:'Helicopter',speed:.014,turnRate:62,traits:'Slow / Quick turns'},
-  {key:'light',name:'Light plane',speed:.019,turnRate:38,traits:'Medium speed / Normal turns'},
-  {key:'heavy',name:'Heavy plane',speed:.024,turnRate:23,traits:'Fast / Slow turns'}
+  {key:'helicopter',name:'Helicopter',speed:.0145,turnRate:64,traits:'Slow / Quick turns'},
+  {key:'light',name:'Light plane',speed:.0185,turnRate:40,traits:'Moderate speed / Responsive turns'},
+  {key:'heavy',name:'Heavy plane',speed:.023,turnRate:25,traits:'Fast / Wide turns'},
+  {key:'business',name:'Business jet',speed:.026,turnRate:34,traits:'Very fast / Moderate turns'},
+  {key:'fighter',name:'Fighter jet',speed:.0295,turnRate:72,traits:'Fastest / Agile turns'}
 ];
+const settingsKey='gca.settings';
+const defaultSettings={compassGuide:true,showPoints:true,showWind:true,refreshMs:0,aircraftShape:true,aircraft:['helicopter','light','heavy'],calmWind:false};
+let settings={...defaultSettings,aircraft:[...defaultSettings.aircraft]};
+try{
+  const saved=JSON.parse(localStorage.getItem(settingsKey));
+  if(saved&&typeof saved==='object')settings={...settings,...saved,aircraft:Array.isArray(saved.aircraft)&&saved.aircraft.length?saved.aircraft:[...defaultSettings.aircraft]};
+}catch{}
 const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+settings.refreshMs=clamp(Number(settings.refreshMs)||0,0,10000);
+settings.aircraft=settings.aircraft.filter(key=>aircraftTypes.some(type=>type.key===key));
+if(!settings.aircraft.length)settings.aircraft=[...defaultSettings.aircraft];
 const norm = a=>(a%360+360)%360;
 const rad = a=>a*Math.PI/180;
 const coursePoint=(along,side=0)=>({x:runway.x+along*Math.sin(rad(runway.heading))+side*Math.cos(rad(runway.heading)),y:runway.y-along*Math.cos(rad(runway.heading))+side*Math.sin(rad(runway.heading))});
@@ -112,7 +128,7 @@ function playNextRadio(){
   activeRadio=entry;
   displayMessage(entry);
   const utterance=new SpeechSynthesisUtterance(entry.spoken);
-  utterance.lang='en-US';utterance.rate=.94;utterance.pitch=.88;
+  utterance.lang='en-US';utterance.rate=1.00;utterance.pitch=.88;
   utterance.onend=()=>finishRadio(entry);
   utterance.onerror=()=>finishRadio(entry);
   try{window.speechSynthesis.speak(utterance)}catch{finishRadio(entry);return}
@@ -128,7 +144,10 @@ function showMessage(t,seconds=4,spoken=t,onFinished,onStart,kind='general'){
   const entry={text:t,seconds,spoken,onFinished,onStart,kind};
   if(!voiceEnabled){displayMessage(entry);return false}
   if(kind==='heading')radioQueue=radioQueue.filter(waiting=>waiting.kind!=='heading');
-  radioQueue.push(entry);
+  if(kind==='distance'){
+    radioQueue=radioQueue.filter(waiting=>waiting.kind!=='course'&&waiting.kind!=='distance');
+    radioQueue.unshift(entry);
+  }else radioQueue.push(entry);
   playNextRadio();
   return true;
 }
@@ -144,9 +163,10 @@ function releaseHeading(command){
   }
 }
 function courseAdvisory(){
-  const offset=coursePosition(plane.x,plane.y).side,absolute=Math.abs(offset);
+  const position=coursePosition(plane.x,plane.y),offset=position.side,absolute=Math.abs(offset);
+  const onCourse=absolute<localizerWidth(position.along);
   let course;
-  if(absolute<localizerWidth())course='ON COURSE';
+  if(onCourse)course='ON COURSE';
   else{
     const side=offset<0?'LEFT':'RIGHT';
     const degree=absolute>runway.halfWidth*1.5?'WELL ':absolute<runway.halfWidth?'SLIGHTLY ':'';
@@ -157,54 +177,80 @@ function courseAdvisory(){
     course=`${degree}${side} OF COURSE${diverging?`, GOING ${side}`:correcting?correctionRate<.003?', CORRECTING SLOWLY':', CORRECTING':''}`;
   }
   plane.lastCourseAbs=absolute;
-  const miles=Math.max(0,-coursePosition(plane.x,plane.y).along*rangeScale);
+  const miles=Math.max(0,-position.along*rangeScale);
   const distanceCall=plane.nextDistanceCall>=2&&miles<=plane.nextDistanceCall;
   const phrase=distanceCall?`${plane.nextDistanceCall} MILES FROM RUNWAY, ${course}.`:`${course}.`;
   if(distanceCall)plane.nextDistanceCall-=2;
-  showMessage(phrase,5,phrase,undefined,undefined,'course');
+  showMessage(phrase,5,phrase,undefined,undefined,distanceCall?'distance':'course');
 }
-function localizerWidth(){return Math.max(.018,runway.halfWidth*.65)}
-function broadLocalizerWidth(){return Math.max(.018,runway.halfWidth*.7)*1.8}
+function localizerWidth(along=0){return Math.max(.007,runway.halfWidth*.2)+Math.max(0,localizerOrigin-along)*Math.tan(rad(.8))}
+function broadLocalizerWidth(along=0){return Math.max(.014,runway.halfWidth*.35)+Math.max(0,localizerOrigin-along)*Math.tan(rad(4.5))}
 function landingBonuses(position){
-  const center=Math.round(200*clamp(1-Math.abs(position.side)/runway.halfWidth,0,1));
-  const steady=plane.steadySeconds>=3?Math.round(160*clamp(1-plane.steadyPenalty/plane.steadySeconds,0,1)):0;
-  const stunt=plane.preFinalTurn>=100&&plane.maxPreFinalError>=60?40:0;
-  return {center,steady,stunt};
+  const first=plane.limitTrackSamples[0],last=plane.limitTrackSamples[plane.limitTrackSamples.length-1];
+  const alongTravel=first&&last?last.along-first.along:0,sideTravel=first&&last?last.side-first.side:0;
+  const hasTrack=plane.limitTrackSeconds>=2&&alongTravel>0;
+  const projectedThresholdSide=hasTrack?position.side+(sideTravel/alongTravel)*(0-position.along):Infinity;
+  const threshold=Math.round(100*clamp(1-Math.abs(projectedThresholdSide)/runwayVisualHalfWidth,0,1));
+  const steady=plane.steadySeconds>=3?Math.round(200*clamp(1-plane.steadyPenalty/plane.steadySeconds,0,1)):0;
+  const trackError=alongTravel>0?Math.abs(Math.atan2(sideTravel,alongTravel)*180/Math.PI):90;
+  const track=plane.limitTrackSeconds>=2?Math.round(200*clamp(1-trackError/12,0,1)):0;
+  const capture=plane.courseCaptured?40:0;
+  return {threshold,steady,track,capture};
 }
 function updateWindDisplay(){
-  wind.knots=Math.round(Math.abs(wind.cross)/.00045);
-  $('wind').textContent=wind.knots>=2?`DRIFT ${wind.cross<0?'LEFT':'RIGHT'} ${String(wind.knots).padStart(2,'0')} KT`:'DRIFT VARIABLE';
-  $('wind').classList.toggle('gust',wind.knots>=12);
+  wind.knots=Math.round(wind.shownSpeed);
 }
 function updateWind(dt,t){
+  if(settings.calmWind){wind.speed=wind.targetSpeed=wind.shownSpeed=wind.knots=wind.x=wind.y=0;return}
+  const directionRate=Math.min(3+landings*3,30);
   if(t>=wind.nextShift){
-    const direction=(Math.random()<.75?-1:1)*Math.sign(wind.target||1);
-    wind.target=direction*wind.max*(.4+Math.random()*.6);
-    wind.nextShift=t+3000+Math.random()*2500;
+    const directionRange=Math.min(8+landings*10+landings*landings*2,180);
+    const directionChange=Math.random()*directionRange*2-directionRange;
+    wind.targetDirection+=directionChange;
+    const speedChange=Math.min(1.5+landings*.5,5);
+    wind.targetSpeed=clamp(wind.targetSpeed+(Math.random()*2-1)*speedChange,wind.minKnots,wind.maxKnots);
+    wind.nextShift=t+2000+Math.abs(directionChange)/directionRate*1000+Math.random()*1500;
   }
-  const change=wind.max*.75*dt;
-  wind.base+=clamp(wind.target-wind.base,-change,change);
-  wind.cross=clamp(wind.base+wind.max*.28*Math.sin(t*.003),-wind.max,wind.max);
+  wind.direction+=clamp(wind.targetDirection-wind.direction,-directionRate*dt,directionRate*dt);
+  wind.speed+=clamp(wind.targetSpeed-wind.speed,-1*dt,1*dt);
+  const direction=wind.direction+Math.sin(t*.00055)*2;
+  const speed=Math.max(0,wind.speed+Math.sin(t*.0008+1.3)*.5);
+  wind.shownDirection=direction;
+  wind.shownSpeed=speed;
+  wind.x=Math.sin(rad(direction))*speed*.00045;
+  wind.y=-Math.cos(rad(direction))*speed*.00045;
   if(t-wind.lastDisplay>250){updateWindDisplay();wind.lastDisplay=t}
 }
 function updateLocalizer(dt){
   const position=coursePosition(plane.x,plane.y);
-  const inFinal=position.along>=-finalCourseLength&&position.along<-.02;
+  const inFinal=position.along>=-finalCourseLength&&position.along<-guidanceLimitDistance;
   const offset=Math.abs(position.side);
-  const onNarrow=inFinal&&offset<localizerWidth();
-  const onBroad=inFinal&&offset<broadLocalizerWidth();
-  plane.locSeconds=onNarrow?plane.locSeconds+dt:0;
-  const doubled=plane.locSeconds>=requiredLocSeconds;
-  const speedFactor=plane.speed/aircraftTypes[2].speed;
+  const narrowWidth=localizerWidth(position.along),broadWidth=broadLocalizerWidth(position.along);
+  const onCenter=inFinal&&offset<narrowWidth*.35;
+  const onNarrow=inFinal&&offset<narrowWidth;
+  const onBroad=inFinal&&offset<broadWidth;
+  if(!plane.courseCaptured){plane.captureSeconds=onNarrow&&headingError(plane.h)<=20?plane.captureSeconds+dt:0;if(plane.captureSeconds>=3)plane.courseCaptured=true}
+  if(onCenter){plane.centerSeconds+=dt;plane.centerMissSeconds=0}
+  else if(onNarrow){plane.centerMissSeconds+=dt;if(plane.centerMissSeconds>.5)plane.centerSeconds=Math.max(0,plane.centerSeconds-dt*2)}
+  else{plane.centerSeconds=0;plane.centerMissSeconds=0}
+  const speedFactor=plane.speed/scoringReferenceSpeed;
   const narrowRate=narrowPointsPerSecond*speedFactor;
   const broadRate=broadPointsPerSecond*speedFactor;
-  if(onNarrow)score+=narrowRate*(doubled?2:1)*dt;
+  const alignment=clamp(1-headingError(plane.h)/45,0,1);
+  const centerBaseRate=(narrowPointsPerSecond+(centerPointsPerSecond-narrowPointsPerSecond)*alignment)*speedFactor;
+  const centerMultiplier=1+clamp(plane.centerSeconds/requiredCenterSeconds,0,1);
+  const centerRate=centerBaseRate*centerMultiplier;
+  if(onCenter)score+=centerRate*dt;
+  else if(onNarrow)score+=narrowRate*dt;
   else if(onBroad)score+=broadRate*dt;
-  const state=!inFinal?'ACQUIRE':onNarrow?(doubled?`NARROW x2 +${(narrowRate*2).toFixed(1)}/s`:`NARROW +${narrowRate.toFixed(1)}/s`):onBroad?`WIDE +${broadRate.toFixed(1)}/s`:'OFF PATH';
-  $('locStatus').textContent=`LOC · ${state} ${Math.min(requiredLocSeconds,plane.locSeconds).toFixed(1)} / ${requiredLocSeconds}s`;
-  $('locStatus').classList.toggle('established',doubled);
+  plane.scoringZone=onCenter?'CENTER':onNarrow?'NARROW':onBroad?'WIDE':'OFF PATH';
+  plane.currentPointRate=onCenter?centerRate:onNarrow?narrowRate:onBroad?broadRate:0;
+  plane.currentMultiplier=onCenter?centerMultiplier:1;
+  const state=!inFinal?'ACQUIRE':onCenter?`CENTER ×${centerMultiplier.toFixed(1)} +${Math.round(centerRate)}/s`:onNarrow?`NARROW +${Math.round(narrowRate)}/s`:onBroad?`WIDE +${Math.round(broadRate)}/s`:'OFF PATH';
+  $('locStatus').textContent=`LOC · ${state}`;
+  $('locStatus').classList.toggle('established',onCenter&&plane.centerSeconds>=requiredCenterSeconds);
 }
-function modal(kicker,title,text,info,button,action){ui.modalKicker.textContent=kicker;ui.modalTitle.textContent=title;ui.modalText.textContent=text;ui.modalInfo.innerHTML=info;ui.modalButton.textContent=button;ui.modalButton.onclick=action;ui.overlay.querySelector('.modal').classList.toggle('missed',kicker==='MISSED APPROACH');$('modalSound').hidden=kicker!=='BRIEFING'||!voiceSupported;$('shareScore').hidden=kicker!=='MISSED APPROACH'&&kicker!=='TOUCHDOWN';$('shareScore').textContent='Share Result ↗';ui.overlay.hidden=false}
+function modal(kicker,title,text,info,button,action){ui.modalKicker.textContent=kicker;ui.modalTitle.textContent=title;ui.modalText.textContent=text;ui.modalInfo.innerHTML=info;ui.modalButton.textContent=button;ui.modalButton.onclick=action;ui.overlay.querySelector('.modal').classList.toggle('missed',kicker==='MISSED APPROACH');$('modalSound').hidden=kicker!=='BRIEFING'||!voiceSupported;$('shareScore').hidden=kicker!=='MISSED APPROACH'&&kicker!=='VISUAL HANDOFF';$('shareScore').textContent='Share Result ↗';ui.overlay.hidden=false}
 $('shareScore').onclick=async()=>{
   const text=`TinyGCA: ${landings} landings, ${Math.floor(score)} points.\nhttps://tatesuke.github.io/TinyGCA/`;
   if(navigator.share){try{await navigator.share({text});return}catch(error){if(error.name==='AbortError')return}}
@@ -220,25 +266,36 @@ function newPlane(retry=false){
   document.querySelector('.radar-top span:last-child').textContent=`RWY ${String(Math.round(runway.heading/10)%36).padStart(2,'0')} ◆`;
   runway.halfWidth=approachHalfWidth(landings);
   $('gateWidth').textContent=`GATE ${Math.round(runway.halfWidth/.047*100)}%`;
-  wind.max=Math.min(.003+landings*.001,.011);
-  wind.cross=(Math.random()<.5?-1:1)*wind.max*(.45+Math.random()*.35);
-  wind.base=wind.cross;
-  wind.target=wind.cross;
-  wind.nextShift=performance.now()+3000+Math.random()*2000;
+  wind.minKnots=Math.min(1.5+landings*.35,5);
+  wind.maxKnots=Math.min(4+landings*1.2+landings*landings*.25,24);
+  if(!wind.initialized){
+    wind.direction=Math.random()*360;
+    wind.targetDirection=wind.direction;
+    wind.speed=wind.targetSpeed=wind.minKnots+Math.random()*(wind.maxKnots-wind.minKnots);
+    wind.shownDirection=wind.direction;
+    wind.shownSpeed=wind.speed;
+    wind.initialized=true;
+  }else{
+    wind.targetSpeed=clamp(wind.targetSpeed,wind.minKnots,wind.maxKnots);
+  }
+  if(settings.calmWind)wind.speed=wind.targetSpeed=wind.shownSpeed=wind.knots=wind.x=wind.y=0;
+  wind.nextShift=performance.now()+2500+Math.random()*1500;
   wind.lastDisplay=0;
   updateWindDisplay();
   const variant=retry?previous.variant:nextCallsign++%4;
   const side=variant%2===0?-.16:.16;
   const startPoint=coursePoint(-approachStartDistance,side);
   const s={...startPoint,h:norm(runway.heading+(side<0?25:-25))};
-  const type=retry?previous.type:aircraftTypes[Math.floor(Math.random()*aircraftTypes.length)];
-  plane={x:s.x,y:s.y,h:s.h,target:s.h,call:retry?previous.call:callsigns[(nextCallsign-1)%callsigns.length],type,variant,trail:[],speed:type.speed+Math.min(landings,6)*.0008,lastTrail:0,lastCourseCall:performance.now(),lastCommandAt:0,lastCourseAbs:null,nextDistanceCall:8,locSeconds:0,pendingHeading:null,steadySamples:[],steadySeconds:0,steadyPenalty:0,lastSide:side,preFinalTurn:0,maxPreFinalError:0,sharpTurnSeconds:0,sharpTurnCharged:false};
-  $('locStatus').textContent=`LOC · ACQUIRE 0.0 / ${requiredLocSeconds}s`;
+  const availableTypes=aircraftTypes.filter(item=>settings.aircraft.includes(item.key));
+  const type=retry?previous.type:availableTypes[Math.floor(Math.random()*availableTypes.length)];
+  const detectedAt=performance.now();
+  plane={x:s.x,y:s.y,h:s.h,target:s.h,call:retry?previous.call:callsigns[(nextCallsign-1)%callsigns.length],type,variant,trail:[],radarReturn:{x:s.x,y:s.y,h:s.h,detectedAt},lastTrail:detectedAt,speed:type.speed+Math.min(landings,6)*.0008,lastCourseCall:performance.now(),lastCommandAt:0,lastCourseAbs:null,nextDistanceCall:8,centerSeconds:0,centerMissSeconds:0,captureSeconds:0,courseCaptured:false,scoringZone:'OFF PATH',currentPointRate:0,currentMultiplier:1,pendingHeading:null,steadySeconds:0,steadyPenalty:0,limitTrackSamples:[],limitTrackSeconds:0,sharpTurnSeconds:0,sharpTurnCharged:false};
+  $('locStatus').textContent='LOC · ACQUIRE';
   $('locStatus').classList.remove('established');
   $('aircraftType').textContent=type.name;
   setSelected(Math.round(s.h/5)*5);
-  ui.note.textContent=`${type.name}: ${type.traits}. Wind changes during flight.`;
-  const contact=`RADAR CONTACT. DRIFT ${wind.cross<0?'LEFT':'RIGHT'}, ${wind.knots} KNOTS.`;
+  ui.note.textContent=`${type.name}: ${type.traits}. ${settings.calmWind?'Calm wind mode.':'Wind changes during flight.'}`;
+  const contact=settings.calmWind?'RADAR CONTACT. WIND CALM.':`RADAR CONTACT. WIND FROM ${fmt(wind.direction+180)}, ${wind.knots} KNOTS.`;
   const spokenCall=plane.call.replace(/\d{3}/,digits=>digits.split('').map(d=>radioDigits[Number(d)]).join(' '));
   if(retry)showMessage(`GO AROUND ${goArounds}. -${goAroundPenalty} POINTS. RETURN FOR ANOTHER APPROACH.`,5);
   else showMessage(`${plane.call}, ${contact}`,5,`${spokenCall}, ${contact}`);
@@ -253,12 +310,12 @@ function goAround(){
   newPlane(true);
   lastTime=performance.now();
 }
-function start(){score=0;goArounds=0;landings=0;renderScore();misses=0;nextCallsign=0;elapsed=0;$('clock').textContent='00:00';ui.overlay.hidden=true;playing=true;newPlane();lastTime=performance.now();requestAnimationFrame(frame)}
+function start(){score=0;goArounds=0;landings=0;renderScore();misses=0;nextCallsign=0;elapsed=0;wind.initialized=false;$('clock').textContent='00:00';ui.overlay.hidden=true;playing=true;newPlane();lastTime=performance.now();requestAnimationFrame(frame)}
 function end(success,reason='MISSED APPROACH.'){
   playing=false;
   $('issue').classList.remove('transmitting');
   const bonus=success?landingBonuses(coursePosition(plane.x,plane.y)):null;
-  if(bonus)score+=bonus.center+bonus.steady+bonus.stunt;
+  if(bonus)score+=bonus.threshold+bonus.steady+bonus.track+bonus.capture;
   if(!success&&Math.floor(score)>maxScore){maxScore=Math.floor(score);saveMaxScore()}
   renderScore();
   plane.pendingHeading=null;
@@ -267,7 +324,7 @@ function end(success,reason='MISSED APPROACH.'){
   else{misses++;showMessage(reason,10);setTimeout(()=>{if(!playing)showDialog('missed',start,plane.call)},650)}
 }
 function update(dt,t){
-  if(!plane||!playing||!ui.overlay.hidden)return;
+  if(!plane||!playing||!ui.overlay.hidden||!$('settingsOverlay').hidden)return;
   elapsed+=dt;$('clock').textContent=`${String(Math.floor(elapsed/60)).padStart(2,'0')}:${String(Math.floor(elapsed%60)).padStart(2,'0')}`;
   updateWind(dt,t);
   const diff=((plane.target-plane.h+540)%360)-180;
@@ -275,14 +332,15 @@ function update(dt,t){
   plane.h=norm(plane.h+turn);
   plane.x+=Math.sin(rad(plane.h))*plane.speed*dt;
   plane.y-=Math.cos(rad(plane.h))*plane.speed*dt;
-  plane.x+=Math.cos(rad(runway.heading))*wind.cross*dt;
-  plane.y+=Math.sin(rad(runway.heading))*wind.cross*dt;
+  plane.x+=wind.x*dt;
+  plane.y+=wind.y*dt;
   updateLocalizer(dt);
-  if(t-plane.lastTrail>180){plane.trail.push({x:plane.x,y:plane.y});if(plane.trail.length>90)plane.trail.shift();plane.lastTrail=t}
   const dx=runway.x-plane.x,dy=runway.y-plane.y;
   const dist=Math.hypot(dx,dy);
   const position=coursePosition(plane.x,plane.y);
-  const sharpTurn=dt>0&&position.along>=-finalCourseLength&&position.along<-.02&&Math.abs(turn)/dt>30;
+  plane.limitTrackSamples.push({dt,along:position.along,side:position.side});plane.limitTrackSeconds+=dt;
+  while(plane.limitTrackSeconds>3&&plane.limitTrackSamples.length>1){const old=plane.limitTrackSamples.shift();plane.limitTrackSeconds-=old.dt}
+  const sharpTurn=dt>0&&position.along>=-finalCourseLength&&position.along<-guidanceLimitDistance&&Math.abs(turn)/dt>30;
   if(sharpTurn){
     plane.sharpTurnSeconds+=dt;
     if(plane.sharpTurnSeconds>=.75&&!plane.sharpTurnCharged){
@@ -294,31 +352,26 @@ function update(dt,t){
     plane.sharpTurnSeconds=0;
     plane.sharpTurnCharged=false;
   }
-  if(position.along<-.3){
-    plane.preFinalTurn+=Math.abs(turn);
-    plane.maxPreFinalError=Math.max(plane.maxPreFinalError,headingError(plane.h));
-  }
-  if(dt>0&&position.along>=-.18&&position.along<-.02){
+  if(dt>0&&position.along>=-(guidanceLimitDistance+.2)&&position.along<-guidanceLimitDistance){
     const turnPenalty=clamp(Math.abs(turn)/dt/18,0,1);
-    const driftPenalty=clamp(Math.abs(position.side-plane.lastSide)/dt/.025,0,1);
-    const penalty=dt*(turnPenalty*.6+driftPenalty*.4);
-    plane.steadySamples.push({dt,penalty});
+    const alignmentPenalty=clamp(headingError(plane.h)/30,0,1);
+    const penalty=dt*(alignmentPenalty*.6+turnPenalty*.4);
     plane.steadyPenalty+=penalty;
     plane.steadySeconds+=dt;
-    while(plane.steadySeconds>6&&plane.steadySamples.length>1){
-      const old=plane.steadySamples.shift();
-      plane.steadySeconds-=old.dt;
-      plane.steadyPenalty-=old.penalty;
-    }
   }
-  plane.lastSide=position.side;
-  if(position.along>=-.02){
-    const onRunway=position.along<.016&&Math.abs(position.side)<runway.halfWidth&&headingError(plane.h)<27;
-    end(onRunway,'MISSED APPROACH.');return;
+  if(position.along>=-guidanceLimitDistance){
+    const handoffReady=Math.abs(position.side)<broadLocalizerWidth(position.along)&&headingError(plane.h)<27;
+    end(handoffReady,'MISSED APPROACH.');return;
   }
   if(position.along<-approachStartDistance-.2||Math.abs(position.side)>.65){end(false);return}
-  if(!plane.pendingHeading&&activeRadio?.kind!=='course'&&!radioQueue.some(entry=>entry.kind==='course')&&position.along>-approachStartDistance+.03&&t-plane.lastCourseCall>=4000&&t-plane.lastCommandAt>=2500){courseAdvisory();plane.lastCourseCall=t}
-  ui.range.textContent=(dist*rangeScale).toFixed(1);ui.heading.textContent=fmt(plane.h);ui.callsign.textContent=plane.call;renderScore();
+  const approachMiles=Math.max(0,-position.along*rangeScale);
+  const distanceDue=plane.nextDistanceCall>=2&&approachMiles<=plane.nextDistanceCall;
+  const distanceSoon=plane.nextDistanceCall>=2&&approachMiles<=plane.nextDistanceCall+.6;
+  const advisoryBusy=['course','distance'].includes(activeRadio?.kind)||radioQueue.some(entry=>entry.kind==='course'||entry.kind==='distance');
+  const regularAdvisoryDue=!distanceSoon&&t-plane.lastCourseCall>=4000&&t-plane.lastCommandAt>=2500;
+  if(!plane.pendingHeading&&!advisoryBusy&&position.along>-approachStartDistance+.03&&(distanceDue||regularAdvisoryDue)){courseAdvisory();plane.lastCourseCall=t}
+  const runwayBearing=norm(Math.atan2(runway.x-plane.x,plane.y-runway.y)*180/Math.PI);
+  ui.range.textContent=(dist*rangeScale).toFixed(1);ui.heading.textContent=fmt(plane.h);ui.currentPointer.style.transform=`rotate(${plane.h+180}deg)`;ui.currentPointer.hidden=false;ui.runwayGuide.style.transform=`rotate(${runwayBearing}deg)`;ui.runwayGuide.hidden=!settings.compassGuide;ui.dial.setAttribute('aria-valuetext',`Selected ${fmt(selected)} degrees, current ${fmt(plane.h)} degrees, runway ${fmt(runwayBearing)} degrees`);ui.callsign.textContent=plane.call;renderScore();
 }
 function resize(){const r=canvas.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(r.width*d);canvas.height=Math.round(r.height*d);ctx.setTransform(d,0,0,d,0,0)}
 function resetRadar(){const center=coursePoint(-approachStartDistance/2);camera.x=center.x;camera.y=center.y;camera.zoom=.72}
@@ -331,6 +384,10 @@ function drawAircraftSymbol(type){
     ctx.moveTo(0,6);ctx.lineTo(0,10);
   }else if(type==='heavy'){
     ctx.moveTo(0,-11);ctx.lineTo(2,-2);ctx.lineTo(10,4);ctx.lineTo(10,7);ctx.lineTo(2,5);ctx.lineTo(2,10);ctx.lineTo(-2,10);ctx.lineTo(-2,5);ctx.lineTo(-10,7);ctx.lineTo(-10,4);ctx.lineTo(-2,-2);ctx.closePath();
+  }else if(type==='business'){
+    ctx.moveTo(0,-10);ctx.lineTo(2,-2);ctx.lineTo(8,4);ctx.lineTo(8,6);ctx.lineTo(2,4);ctx.lineTo(2,9);ctx.lineTo(-2,9);ctx.lineTo(-2,4);ctx.lineTo(-8,6);ctx.lineTo(-8,4);ctx.lineTo(-2,-2);ctx.closePath();
+  }else if(type==='fighter'){
+    ctx.moveTo(0,-11);ctx.lineTo(2,-4);ctx.lineTo(9,5);ctx.lineTo(9,8);ctx.lineTo(2,5);ctx.lineTo(2,9);ctx.lineTo(-2,9);ctx.lineTo(-2,5);ctx.lineTo(-9,8);ctx.lineTo(-9,5);ctx.lineTo(-2,-4);ctx.closePath();
   }else{
     ctx.moveTo(0,-9);ctx.lineTo(5,6);ctx.lineTo(0,3);ctx.lineTo(-5,6);ctx.closePath();
   }
@@ -343,32 +400,52 @@ function draw(t){const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)retu
   ctx.strokeStyle='#244a31';ctx.beginPath();ctx.moveTo(cx-R-25,cy);ctx.lineTo(cx+R+25,cy);ctx.moveTo(cx,cy-R-25);ctx.lineTo(cx,cy+R+25);ctx.stroke();
   const pixel=(along,side=0)=>{const p=coursePoint(along,side);return {x:p.x*w,y:p.y*h}};
   const path=(points,close=false)=>{ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));if(close)ctx.closePath()};
-  const broad=broadLocalizerWidth(),outerA=pixel(-finalCourseLength,-broad),outerB=pixel(0,-broad),outerC=pixel(0,broad),outerD=pixel(-finalCourseLength,broad);
+  const broadFar=broadLocalizerWidth(-finalCourseLength),broadNear=broadLocalizerWidth(localizerOrigin),outerA=pixel(-finalCourseLength,-broadFar),outerB=pixel(localizerOrigin,-broadNear),outerC=pixel(localizerOrigin,broadNear),outerD=pixel(-finalCourseLength,broadFar);
   ctx.fillStyle='#d9a36f10';path([outerA,outerB,outerC,outerD],true);ctx.fill();
-  ctx.setLineDash([2,7]);ctx.strokeStyle='#a7835b';path([outerA,outerB]);ctx.stroke();path([outerC,outerD]);ctx.stroke();ctx.setLineDash([]);
-  const half=localizerWidth(),a=pixel(-finalCourseLength,-half),b=pixel(0,-half),c=pixel(0,half),d=pixel(-finalCourseLength,half);
+  ctx.setLineDash([2,7]);ctx.strokeStyle='#a7835b';ctx.lineWidth=1;path([outerA,outerB]);ctx.stroke();path([outerC,outerD]);ctx.stroke();ctx.setLineDash([]);
+  const halfFar=localizerWidth(-finalCourseLength),halfNear=localizerWidth(localizerOrigin),a=pixel(-finalCourseLength,-halfFar),b=pixel(localizerOrigin,-halfNear),c=pixel(localizerOrigin,halfNear),d=pixel(-finalCourseLength,halfFar);
   ctx.fillStyle='#84d58a12';path([a,b,c,d],true);ctx.fill();
   ctx.setLineDash([3,6]);ctx.strokeStyle='#527f59';path([a,b]);ctx.stroke();path([c,d]);ctx.stroke();
-  ctx.setLineDash([4,6]);ctx.strokeStyle='#73af79';path([pixel(-finalCourseLength),pixel(0)]);ctx.stroke();ctx.setLineDash([]);
-  const label=pixel(-finalCourseLength+.01,-half-.025);ctx.fillStyle='#8cb593';ctx.font='10px DM Mono, monospace';ctx.fillText(`FINAL COURSE ${fmt(runway.heading)}°`,label.x,label.y);
-  const gateA=pixel(0,-runway.halfWidth),gateB=pixel(0,runway.halfWidth);ctx.strokeStyle='#d3f7bb';ctx.lineWidth=5;path([gateA,gateB]);ctx.stroke();ctx.lineWidth=1;
-  const runwayLabel=pixel(.02,-runway.halfWidth);ctx.fillStyle='#a2d89a';ctx.fillText(`RWY ${String(Math.round(runway.heading/10)%36).padStart(2,'0')}`,runwayLabel.x,runwayLabel.y);
-  sweep=(t*.00035)%(Math.PI*2);const grad=ctx.createConicGradient(sweep,cx,cy);grad.addColorStop(0,'#9df6a900');grad.addColorStop(.94,'#9df6a900');grad.addColorStop(1,'#9df6a924');ctx.fillStyle=grad;ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#92e69b44';ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(sweep)*R,cy+Math.sin(sweep)*R);ctx.stroke();ctx.restore();
+  ctx.setLineDash([4,6]);ctx.strokeStyle='#73af79';path([pixel(-finalCourseLength),pixel(localizerOrigin)]);ctx.stroke();ctx.setLineDash([]);
+  const label=pixel(-finalCourseLength+.01,-halfFar-.025);ctx.fillStyle='#8cb593';ctx.font='10px DM Mono, monospace';ctx.fillText(`FINAL COURSE ${fmt(runway.heading)}°`,label.x,label.y);
+  const runwayA=pixel(0,-runwayVisualHalfWidth),runwayB=pixel(runwayLength,-runwayVisualHalfWidth),runwayC=pixel(runwayLength,runwayVisualHalfWidth),runwayD=pixel(0,runwayVisualHalfWidth);ctx.fillStyle='#b7d7bb18';ctx.strokeStyle='#8fb998';path([runwayA,runwayB,runwayC,runwayD],true);ctx.fill();ctx.stroke();
+  const thresholdA=pixel(0,-runwayVisualHalfWidth),thresholdB=pixel(0,runwayVisualHalfWidth);ctx.strokeStyle='#d3f7bb';ctx.lineWidth=3;path([thresholdA,thresholdB]);ctx.stroke();ctx.lineWidth=1;
+  const gateA=pixel(-guidanceLimitDistance,-runway.halfWidth),gateB=pixel(-guidanceLimitDistance,runway.halfWidth);ctx.strokeStyle='#d3f7bb';ctx.setLineDash([3,4]);path([gateA,gateB]);ctx.stroke();ctx.setLineDash([]);
+  const antenna=pixel(localizerOrigin);ctx.fillStyle='#f2bd78';ctx.beginPath();ctx.arc(antenna.x,antenna.y,3,0,Math.PI*2);ctx.fill();
+  const runwayLabel=pixel(.02,-runwayVisualHalfWidth-.012);ctx.fillStyle='#a2d89a';ctx.fillText(`RWY ${String(Math.round(runway.heading/10)%36).padStart(2,'0')}`,runwayLabel.x,runwayLabel.y);
+  sweep=(t/radarScanMs*Math.PI*2)%(Math.PI*2);const grad=ctx.createConicGradient(sweep,cx,cy);grad.addColorStop(0,'#9df6a900');grad.addColorStop(.94,'#9df6a900');grad.addColorStop(1,'#9df6a924');ctx.fillStyle=grad;ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#92e69b44';ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(sweep)*R,cy+Math.sin(sweep)*R);ctx.stroke();ctx.restore();
   if(plane){
+    if(settings.refreshMs===0||t-plane.radarReturn.detectedAt>=settings.refreshMs){
+      plane.radarReturn={x:plane.x,y:plane.y,h:plane.h,detectedAt:t};
+    }
+    if(t-plane.lastTrail>=Math.max(settings.refreshMs,180)){
+      plane.trail.push({x:plane.radarReturn.x,y:plane.radarReturn.y});
+      const maxTrailPoints=Math.max(2,Math.ceil(16200/Math.max(settings.refreshMs,180)));
+      while(plane.trail.length>maxTrailPoints)plane.trail.shift();
+      plane.lastTrail=t;
+    }
     ctx.save();
+    const radarReturn=plane.radarReturn||plane;
+    const x=radarReturn.x*w,y=radarReturn.y*h;
     plane.trail.forEach((p,i)=>{ctx.fillStyle=`rgba(174,236,158,${i/plane.trail.length*.45})`;ctx.fillRect(p.x*w-1,p.y*h-1,2,2)});
-    const x=plane.x*w,y=plane.y*h;
-    ctx.translate(x,y);ctx.rotate(rad(plane.h));ctx.shadowBlur=16;ctx.shadowColor='#c4ffb7';ctx.fillStyle='#d1ffbf';drawAircraftSymbol(plane.type.key);ctx.shadowBlur=0;ctx.restore();
-    const arrowX=x-18,arrowY=y;
-    const driftX=Math.cos(rad(runway.heading))*wind.cross*w*12,driftY=Math.sin(rad(runway.heading))*wind.cross*h*12;
-    const tipX=arrowX+driftX,tipY=arrowY+driftY,angle=Math.atan2(driftY,driftX);
+    ctx.translate(x,y);ctx.rotate(rad(radarReturn.h));ctx.shadowBlur=16;ctx.shadowColor='#c4ffb7';ctx.fillStyle='#d1ffbf';ctx.globalAlpha=settings.refreshMs===0?1:.82+.18*clamp(1-(t-radarReturn.detectedAt)/1200,0,1);if(settings.aircraftShape)drawAircraftSymbol(plane.type.key);else{ctx.beginPath();ctx.arc(0,0,3,0,Math.PI*2);ctx.fill()}ctx.shadowBlur=0;ctx.restore();
+    if(settings.showWind&&!settings.calmWind){const arrowX=x-18,arrowY=y;
+    const arrowLength=12+Math.min(wind.shownSpeed,25)*2;
+    const windX=Math.sin(rad(wind.shownDirection))*arrowLength;
+    const windY=-Math.cos(rad(wind.shownDirection))*arrowLength;
+    const tipX=arrowX+windX,tipY=arrowY+windY,angle=Math.atan2(windY,windX);
     ctx.strokeStyle='#f1ab6b';ctx.fillStyle='#f1ab6b';ctx.lineWidth=2;
     ctx.beginPath();ctx.moveTo(arrowX,arrowY);ctx.lineTo(tipX,tipY);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(tipX,tipY);ctx.lineTo(tipX-7*Math.cos(angle-.5),tipY-7*Math.sin(angle-.5));ctx.lineTo(tipX-7*Math.cos(angle+.5),tipY-7*Math.sin(angle+.5));ctx.closePath();ctx.fill();
-    ctx.strokeStyle='#a6dba2';ctx.beginPath();ctx.moveTo(x+8,y-8);ctx.lineTo(x+21,y-21);ctx.lineTo(x+69,y-21);ctx.stroke();ctx.fillStyle='#d5f4cb';ctx.font='11px DM Mono, monospace';ctx.fillText(plane.call,x+24,y-26);
+    ctx.beginPath();ctx.moveTo(tipX,tipY);ctx.lineTo(tipX-7*Math.cos(angle-.5),tipY-7*Math.sin(angle-.5));ctx.lineTo(tipX-7*Math.cos(angle+.5),tipY-7*Math.sin(angle+.5));ctx.closePath();ctx.fill()}
+    const labelSide=x>w-145?-1:1,labelX=x+24*labelSide;ctx.textAlign=labelSide<0?'right':'left';
+    ctx.strokeStyle='#a6dba2';ctx.beginPath();ctx.moveTo(x+8*labelSide,y-8);ctx.lineTo(x+21*labelSide,y-21);ctx.lineTo(x+88*labelSide,y-21);ctx.stroke();ctx.fillStyle='#d5f4cb';ctx.font='11px DM Mono, monospace';ctx.fillText(plane.call,labelX,y-26);
+    if(settings.showPoints){const scoring=plane.scoringZone!=='OFF PATH',centerScoring=plane.scoringZone==='CENTER';
+    const scoringPulse=centerScoring&&!reduceRadarMotion ? .9+.1*(.5+.5*Math.sin(t*.014)) : 1;
+    ctx.save();ctx.globalAlpha=scoring?scoringPulse:.55;ctx.fillStyle=centerScoring?'#caffb9':plane.scoringZone==='NARROW'?'#91dfa0':plane.scoringZone==='WIDE'?'#f2bd78':'#789b88';ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=centerScoring?10:scoring?5:0;ctx.font=`700 ${centerScoring?12:10}px DM Mono, monospace`;
+    const multiplier=`×${plane.currentMultiplier.toFixed(1)}`;ctx.fillText(`+${Math.round(plane.currentPointRate)} PT/s  ${multiplier}`,labelX,y-10);
+    if(centerScoring){const progress=clamp(plane.centerSeconds/requiredCenterSeconds,0,1),barWidth=76,barX=labelSide<0?labelX-barWidth:labelX,barY=y-4;ctx.shadowBlur=0;ctx.globalAlpha=.8;ctx.fillStyle='#173c2a';ctx.fillRect(barX,barY,barWidth,4);ctx.fillStyle='#baffaa';ctx.fillRect(barX,barY,barWidth*progress,4);ctx.strokeStyle='#8acb8799';ctx.lineWidth=1;ctx.strokeRect(barX-.5,barY-.5,barWidth+1,5)}ctx.restore()}ctx.textAlign='left';
   }
   ctx.restore();
-  ui.radarState.textContent=`SCAN ${String(Math.floor(t/3600)%99).padStart(2,'0')}`;
 }
 function frame(t){const dt=Math.min((t-lastTime)/1000,.06);lastTime=t;update(dt,t);draw(t);if(t>messageUntil)ui.message.style.opacity='.35';if(playing)requestAnimationFrame(frame)}
 function dialFromPointer(e){const r=ui.dial.getBoundingClientRect(),x=e.clientX-r.left-r.width/2,y=e.clientY-r.top-r.height/2;setSelected(Math.atan2(x,-y)*180/Math.PI)}
@@ -409,6 +486,37 @@ $('issue').onclick=()=>{
 $('voiceButton').onclick=$('modalVoiceButton').onclick=()=>{voiceEnabled=!voiceEnabled;$('voiceButton').textContent=voiceEnabled?'VOICE ON':'VOICE OFF';$('voiceButton').setAttribute('aria-pressed',String(voiceEnabled));$('modalVoiceButton').textContent=voiceEnabled?'ON':'OFF';$('modalVoiceButton').setAttribute('aria-pressed',String(voiceEnabled));if(!voiceEnabled)clearRadio(true)};
 if(!voiceSupported){$('voiceButton').hidden=true;$('voiceButton').setAttribute('aria-pressed','false')}
 window.addEventListener('resize',()=>{resize();draw(performance.now())});
+function fillSettingsForm(values){
+  $('settingCompassGuide').checked=values.compassGuide;
+  $('settingPoints').checked=values.showPoints;
+  $('settingWindDisplay').checked=values.showWind;
+  $('settingRefreshMs').value=String(values.refreshMs);
+  $('settingAircraftShape').checked=values.aircraftShape;
+  $('settingCalmWind').checked=values.calmWind;
+  document.querySelectorAll('input[name="aircraftType"]').forEach(input=>input.checked=values.aircraft.includes(input.value));
+}
+function openSettings(){
+  fillSettingsForm(settings);
+  $('settingsError').textContent='';
+  $('settingsOverlay').hidden=false;
+}
+function saveSettings(){
+  const aircraft=[...document.querySelectorAll('input[name="aircraftType"]:checked')].map(input=>input.value);
+  if(!aircraft.length){$('settingsError').textContent='出現機体を1種類以上選んでください。';return}
+  const wasCalm=settings.calmWind;
+  settings={compassGuide:$('settingCompassGuide').checked,showPoints:$('settingPoints').checked,showWind:$('settingWindDisplay').checked,refreshMs:clamp(Number($('settingRefreshMs').value)||0,0,10000),aircraftShape:$('settingAircraftShape').checked,aircraft,calmWind:$('settingCalmWind').checked};
+  try{localStorage.setItem(settingsKey,JSON.stringify(settings))}catch{}
+  if(wasCalm&&!settings.calmWind)wind.initialized=false;
+  if(settings.calmWind)wind.speed=wind.targetSpeed=wind.shownSpeed=wind.knots=wind.x=wind.y=0;
+  ui.runwayGuide.hidden=!settings.compassGuide;
+  $('settingsOverlay').hidden=true;
+  lastTime=performance.now();
+  draw(lastTime);
+}
+$('settingsButton').onclick=openSettings;
+$('settingsClose').onclick=saveSettings;
+$('settingsReset').onclick=()=>{fillSettingsForm(defaultSettings);$('settingsError').textContent='デフォルト設定に戻しました。保存して閉じると反映されます。'};
+$('settingsOverlay').addEventListener('pointerdown',event=>{if(event.target===$('settingsOverlay'))saveSettings()});
 // Keep the instructions tied to the current approach direction.
 $('helpButton').onclick=()=>showDialog('help',()=>{ui.overlay.hidden=true;lastTime=performance.now()});
 setSelected(90);renderScore();resize();draw(0);
