@@ -393,7 +393,6 @@ function draw(t){const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)retu
   if(plane){
     ctx.save();
     const x=plane.x*w,y=plane.y*h;
-    ctx.setLineDash([5,7]);ctx.strokeStyle='#f2bd785c';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(cx,cy);ctx.stroke();ctx.setLineDash([]);
     plane.trail.forEach((p,i)=>{ctx.fillStyle=`rgba(174,236,158,${i/plane.trail.length*.45})`;ctx.fillRect(p.x*w-1,p.y*h-1,2,2)});
     ctx.translate(x,y);ctx.rotate(rad(plane.h));ctx.shadowBlur=16;ctx.shadowColor='#c4ffb7';ctx.fillStyle='#d1ffbf';drawAircraftSymbol(plane.type.key);ctx.shadowBlur=0;ctx.restore();
     const arrowX=x-18,arrowY=y;
