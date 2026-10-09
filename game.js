@@ -8,12 +8,12 @@ document.documentElement.lang=language;
 let activeDialog=null;
 const dialogCopy={
   briefing:{
-    en:['BRIEFING','Start Control','You are the controller for the final approach. Give the aircraft a heading and guide it to the runway.','Score points while flying in the approach path. The narrow green path pays more than the wider amber path, with rates adjusted for aircraft speed. Stay in the narrow path for <strong>7 continuous seconds</strong> to earn double points there.<br>Turn the dial and tap Send Heading.','Start Control →'],
-    ja:['ブリーフィング','管制開始','あなたは最終進入の管制官です。航空機に方位を指示し、滑走路まで誘導してください。','進入経路内を飛ぶと得点が入ります。狭い緑の経路は広い琥珀色の経路より高得点で、得点率は機体の速度に応じて変わります。緑の経路に<strong>連続7秒間</strong>とどまると、そこでの得点が2倍になります。<br>ダイヤルを回して「Send Heading」を押してください。','管制開始 →']
+    en:['BRIEFING','Start Control','You are the controller for the final approach. Give the aircraft a heading and guide it to the runway.','Score points while flying in the approach path. The centerline pays the most, and its multiplier builds while you track it steadily. Keep the aircraft aligned with the runway for the full reward.<br>Turn the dial and tap Send Heading.','Start Control →'],
+    ja:['ブリーフィング','管制開始','あなたは最終進入の管制官です。航空機に方位を指示し、滑走路まで誘導してください。','進入経路内を飛ぶと得点が入ります。中心線は最も高得点で、安定してなぞるほど倍率が上がります。滑走路の方位に機体を合わせると最大の報酬を得られます。<br>ダイヤルを回して「Send Heading」を押してください。','管制開始 →']
   },
   help:{
-    en:['HOW TO PLAY','How to Play','Guide the aircraft to the runway.','1. Turn the dial to choose a heading, then send it. Use the 5-degree buttons for small changes; RESET restores the instructed heading.<br>2. Stay in the narrow green path for more points, or the wider amber path for fewer points. Rates scale with aircraft speed: initially about 12/s for a helicopter, 15/s for a light plane, 19/s for a heavy plane, 22/s for a business jet, and 25/s for a fighter jet in the narrow path.<br>3. Stay in the narrow path for 7 continuous seconds to double its rate. Leaving the narrow path resets the streak.<br><br>Landing bonuses: up to 200 for touching down near the center, up to 160 for a steady final approach, and 40 for recovering from a large turn before final approach.<br><br>GO AROUND retries the same plane for a 100-point penalty. A sustained sharp turn on final approach costs 40 points. Score stops at zero. LANDINGS counts successful approaches in this run; BEST is the highest final score when a run ends in a missed approach.','Back to Game →'],
-    ja:['遊び方','遊び方','航空機を滑走路まで誘導してください。','1. ダイヤルで方位を選び、Send Headingで指示します。5度ボタンで微調整できます。RESETで現在指示している方位に戻せます。<br>2. 狭い緑の経路では高得点、広い琥珀色の経路では低めの得点が入ります。得点率は機体の速度に応じて変わり、緑の経路では当初、ヘリコプターが約12点/秒、軽飛行機が約15点/秒、大型機が約19点/秒、ビジネスジェットが約22点/秒、戦闘機が約25点/秒です。<br>3. 緑の経路に連続7秒間とどまると得点率が2倍になります。経路を外れると連続時間はリセットされます。<br><br>着陸ボーナス：中心付近への着陸で最大200点、安定した最終進入で最大160点、最終進入前の大きな旋回から立て直すと40点。<br><br>GO AROUNDは100点を消費して同じ機体でやり直します。最終進入中に急旋回を続けると40点減点されます。得点は0点未満になりません。LANDINGSは今回成功した着陸数、BESTはミストアプローチで終了した時点の最高得点です。','ゲームに戻る →']
+    en:['HOW TO PLAY','How to Play','Guide the aircraft to the runway.','1. Turn the dial to choose a heading, then send it. Use the 5-degree buttons for small changes; RESET restores the instructed heading.<br>2. The amber path earns a small reward, the narrow green path earns more, and tracking the centerline earns the most. Rates scale with aircraft speed.<br>3. Hold the centerline to build the CENTER multiplier from x1 to x2. Runway alignment increases the centerline reward. A brief deviation is forgiven; a larger deviation drains or resets the streak.<br><br>Landing bonuses: up to 200 for touching down near the center, up to 160 for a steady final approach, and 40 for recovering from a large turn before final approach.<br><br>GO AROUND retries the same plane for a 100-point penalty. A sustained sharp turn on final approach costs 40 points. Score stops at zero. LANDINGS counts successful approaches in this run; BEST is the highest final score when a run ends in a missed approach.','Back to Game →'],
+    ja:['遊び方','遊び方','航空機を滑走路まで誘導してください。','1. ダイヤルで方位を選び、Send Headingで指示します。5度ボタンで微調整できます。RESETで現在指示している方位に戻せます。<br>2. 琥珀色の経路では少量、狭い緑の経路ではより多く、中心線をなぞると最も多く得点できます。得点率は機体の速度に応じて変わります。<br>3. 中心線を維持するとCENTER倍率が1倍から2倍まで上がります。滑走路との方位差が小さいほど中心線の報酬が高くなります。短い逸脱は許容されますが、大きく外れると連続時間が減少またはリセットされます。<br><br>着陸ボーナス：中心付近への着陸で最大200点、安定した最終進入で最大160点、最終進入前の大きな旋回から立て直すと40点。<br><br>GO AROUNDは100点を消費して同じ機体でやり直します。最終進入中に急旋回を続けると40点減点されます。得点は0点未満になりません。LANDINGSは今回成功した着陸数、BESTはミストアプローチで終了した時点の最高得点です。','ゲームに戻る →']
   },
   landing:{
     en:['TOUCHDOWN','Safe Landing',call=>`You guided ${call} to the runway.`,b=>`Center: <strong>+${b.center}</strong> | Straight: <strong>+${b.steady}</strong> | Stunt: <strong>+${b.stunt}</strong><br>Score: <strong>${String(Math.floor(score)).padStart(4,'0')}</strong> | Landings: <strong>${landings}</strong> | Go-arounds: <strong>${goArounds}</strong>`,'Next Plane →'],
@@ -38,8 +38,8 @@ const runway = {x:.5,y:.5,heading:90,halfWidth:.047};
 const camera = {x:.5,y:.5,zoom:1.3};
 const approachStartDistance=.98,finalCourseLength=.85,rangeScale=10;
 const wind = {direction:0,targetDirection:0,speed:0,targetSpeed:0,shownDirection:0,shownSpeed:0,minKnots:0,maxKnots:0,knots:0,x:0,y:0,nextShift:0,lastDisplay:0,initialized:false};
-const requiredLocSeconds=7;
-const narrowPointsPerSecond=20,broadPointsPerSecond=6;
+const requiredCenterSeconds=9;
+const centerPointsPerSecond=28,narrowPointsPerSecond=18,broadPointsPerSecond=6;
 const scoringReferenceSpeed=.024;
 const reduceRadarMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
 const goAroundPenalty=100,sharpTurnPenalty=40;
@@ -148,9 +148,9 @@ function releaseHeading(command){
   }
 }
 function courseAdvisory(){
-  const offset=coursePosition(plane.x,plane.y).side,absolute=Math.abs(offset);
+  const position=coursePosition(plane.x,plane.y),offset=position.side,absolute=Math.abs(offset);
   let course;
-  if(absolute<localizerWidth())course='ON COURSE';
+  if(absolute<localizerWidth(position.along))course='ON COURSE';
   else{
     const side=offset<0?'LEFT':'RIGHT';
     const degree=absolute>runway.halfWidth*1.5?'WELL ':absolute<runway.halfWidth?'SLIGHTLY ':'';
@@ -161,14 +161,14 @@ function courseAdvisory(){
     course=`${degree}${side} OF COURSE${diverging?`, GOING ${side}`:correcting?correctionRate<.003?', CORRECTING SLOWLY':', CORRECTING':''}`;
   }
   plane.lastCourseAbs=absolute;
-  const miles=Math.max(0,-coursePosition(plane.x,plane.y).along*rangeScale);
+  const miles=Math.max(0,-position.along*rangeScale);
   const distanceCall=plane.nextDistanceCall>=2&&miles<=plane.nextDistanceCall;
   const phrase=distanceCall?`${plane.nextDistanceCall} MILES FROM RUNWAY, ${course}.`:`${course}.`;
   if(distanceCall)plane.nextDistanceCall-=2;
   showMessage(phrase,5,phrase,undefined,undefined,'course');
 }
-function localizerWidth(){return Math.max(.018,runway.halfWidth*.65)}
-function broadLocalizerWidth(){return Math.max(.018,runway.halfWidth*.7)*1.8}
+function localizerWidth(along=0){return Math.max(.007,runway.halfWidth*.2)+Math.abs(Math.min(0,along))*Math.tan(rad(1.35))}
+function broadLocalizerWidth(along=0){return Math.max(.014,runway.halfWidth*.35)+Math.abs(Math.min(0,along))*Math.tan(rad(4.5))}
 function landingBonuses(position){
   const center=Math.round(200*clamp(1-Math.abs(position.side)/runway.halfWidth,0,1));
   const steady=plane.steadySeconds>=3?Math.round(160*clamp(1-plane.steadyPenalty/plane.steadySeconds,0,1)):0;
@@ -202,18 +202,30 @@ function updateLocalizer(dt){
   const position=coursePosition(plane.x,plane.y);
   const inFinal=position.along>=-finalCourseLength&&position.along<-.02;
   const offset=Math.abs(position.side);
-  const onNarrow=inFinal&&offset<localizerWidth();
-  const onBroad=inFinal&&offset<broadLocalizerWidth();
-  plane.locSeconds=onNarrow?plane.locSeconds+dt:0;
-  const doubled=plane.locSeconds>=requiredLocSeconds;
+  const narrowWidth=localizerWidth(position.along),broadWidth=broadLocalizerWidth(position.along);
+  const onCenter=inFinal&&offset<narrowWidth*.35;
+  const onNarrow=inFinal&&offset<narrowWidth;
+  const onBroad=inFinal&&offset<broadWidth;
+  if(onCenter){plane.centerSeconds+=dt;plane.centerMissSeconds=0}
+  else if(onNarrow){plane.centerMissSeconds+=dt;if(plane.centerMissSeconds>.5)plane.centerSeconds=Math.max(0,plane.centerSeconds-dt*2)}
+  else{plane.centerSeconds=0;plane.centerMissSeconds=0}
   const speedFactor=plane.speed/scoringReferenceSpeed;
   const narrowRate=narrowPointsPerSecond*speedFactor;
   const broadRate=broadPointsPerSecond*speedFactor;
-  if(onNarrow)score+=narrowRate*(doubled?2:1)*dt;
+  const alignment=clamp(1-headingError(plane.h)/45,0,1);
+  const centerBaseRate=(narrowPointsPerSecond+(centerPointsPerSecond-narrowPointsPerSecond)*alignment)*speedFactor;
+  const centerMultiplier=1+clamp((plane.centerSeconds-3)/6,0,1);
+  const centerRate=centerBaseRate*centerMultiplier;
+  if(onCenter)score+=centerRate*dt;
+  else if(onNarrow)score+=narrowRate*dt;
   else if(onBroad)score+=broadRate*dt;
-  const state=!inFinal?'ACQUIRE':onNarrow?(doubled?`NARROW x2 +${(narrowRate*2).toFixed(1)}/s`:`NARROW +${narrowRate.toFixed(1)}/s`):onBroad?`WIDE +${broadRate.toFixed(1)}/s`:'OFF PATH';
-  $('locStatus').textContent=`LOC · ${state} ${Math.min(requiredLocSeconds,plane.locSeconds).toFixed(1)} / ${requiredLocSeconds}s`;
-  $('locStatus').classList.toggle('established',doubled);
+  plane.scoringZone=onCenter?'CENTER':onNarrow?'NARROW':onBroad?'WIDE':'OFF PATH';
+  plane.currentPointRate=onCenter?centerRate:onNarrow?narrowRate:onBroad?broadRate:0;
+  plane.currentMultiplier=onCenter?centerMultiplier:1;
+  const state=!inFinal?'ACQUIRE':onCenter?`CENTER x${centerMultiplier.toFixed(1)} +${centerRate.toFixed(1)}/s`:onNarrow?`NARROW +${narrowRate.toFixed(1)}/s`:onBroad?`WIDE +${broadRate.toFixed(1)}/s`:'OFF PATH';
+  const streak=onCenter?` ${Math.min(requiredCenterSeconds,plane.centerSeconds).toFixed(1)} / ${requiredCenterSeconds}s`:'';
+  $('locStatus').textContent=`LOC · ${state}${streak}`;
+  $('locStatus').classList.toggle('established',onCenter&&plane.centerSeconds>=3);
 }
 function modal(kicker,title,text,info,button,action){ui.modalKicker.textContent=kicker;ui.modalTitle.textContent=title;ui.modalText.textContent=text;ui.modalInfo.innerHTML=info;ui.modalButton.textContent=button;ui.modalButton.onclick=action;ui.overlay.querySelector('.modal').classList.toggle('missed',kicker==='MISSED APPROACH');$('modalSound').hidden=kicker!=='BRIEFING'||!voiceSupported;$('shareScore').hidden=kicker!=='MISSED APPROACH'&&kicker!=='TOUCHDOWN';$('shareScore').textContent='Share Result ↗';ui.overlay.hidden=false}
 $('shareScore').onclick=async()=>{
@@ -251,8 +263,8 @@ function newPlane(retry=false){
   const startPoint=coursePoint(-approachStartDistance,side);
   const s={...startPoint,h:norm(runway.heading+(side<0?25:-25))};
   const type=retry?previous.type:aircraftTypes[Math.floor(Math.random()*aircraftTypes.length)];
-  plane={x:s.x,y:s.y,h:s.h,target:s.h,call:retry?previous.call:callsigns[(nextCallsign-1)%callsigns.length],type,variant,trail:[],speed:type.speed+Math.min(landings,6)*.0008,lastTrail:0,lastCourseCall:performance.now(),lastCommandAt:0,lastCourseAbs:null,nextDistanceCall:8,locSeconds:0,pendingHeading:null,steadySamples:[],steadySeconds:0,steadyPenalty:0,lastSide:side,preFinalTurn:0,maxPreFinalError:0,sharpTurnSeconds:0,sharpTurnCharged:false};
-  $('locStatus').textContent=`LOC · ACQUIRE 0.0 / ${requiredLocSeconds}s`;
+  plane={x:s.x,y:s.y,h:s.h,target:s.h,call:retry?previous.call:callsigns[(nextCallsign-1)%callsigns.length],type,variant,trail:[],speed:type.speed+Math.min(landings,6)*.0008,lastTrail:0,lastCourseCall:performance.now(),lastCommandAt:0,lastCourseAbs:null,nextDistanceCall:8,centerSeconds:0,centerMissSeconds:0,scoringZone:'OFF PATH',currentPointRate:0,currentMultiplier:1,pendingHeading:null,steadySamples:[],steadySeconds:0,steadyPenalty:0,lastSide:side,preFinalTurn:0,maxPreFinalError:0,sharpTurnSeconds:0,sharpTurnCharged:false};
+  $('locStatus').textContent='LOC · ACQUIRE';
   $('locStatus').classList.remove('established');
   $('aircraftType').textContent=type.name;
   setSelected(Math.round(s.h/5)*5);
@@ -367,21 +379,14 @@ function draw(t){const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)retu
   ctx.strokeStyle='#244a31';ctx.beginPath();ctx.moveTo(cx-R-25,cy);ctx.lineTo(cx+R+25,cy);ctx.moveTo(cx,cy-R-25);ctx.lineTo(cx,cy+R+25);ctx.stroke();
   const pixel=(along,side=0)=>{const p=coursePoint(along,side);return {x:p.x*w,y:p.y*h}};
   const path=(points,close=false)=>{ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));if(close)ctx.closePath()};
-  const broad=broadLocalizerWidth(),outerA=pixel(-finalCourseLength,-broad),outerB=pixel(0,-broad),outerC=pixel(0,broad),outerD=pixel(-finalCourseLength,broad);
-  const position=plane?coursePosition(plane.x,plane.y):null;
-  const onFinal=position&&position.along>=-finalCourseLength&&position.along<-.02;
-  const centerCaptureWidth=localizerWidth()*.35;
-  const onCenter=onFinal&&Math.abs(position.side)<centerCaptureWidth;
-  const onNarrow=onFinal&&!onCenter&&Math.abs(position.side)<localizerWidth();
-  const onAmber=onFinal&&!onCenter&&!onNarrow&&Math.abs(position.side)<broad;
-  const pulse=reduceRadarMotion?1:.35+.65*(.5+.5*Math.sin(t*.009));
+  const broadFar=broadLocalizerWidth(-finalCourseLength),broadNear=broadLocalizerWidth(0),outerA=pixel(-finalCourseLength,-broadFar),outerB=pixel(0,-broadNear),outerC=pixel(0,broadNear),outerD=pixel(-finalCourseLength,broadFar);
   ctx.fillStyle='#d9a36f10';path([outerA,outerB,outerC,outerD],true);ctx.fill();
-  ctx.save();ctx.setLineDash([2,7]);ctx.strokeStyle=onAmber?`rgba(255, 184, 105, ${.55+.45*pulse})`:'#a7835b';ctx.lineWidth=onAmber?1.5+2*pulse:1;ctx.shadowColor='#ffae61';ctx.shadowBlur=onAmber?6+12*pulse:0;path([outerA,outerB]);ctx.stroke();path([outerC,outerD]);ctx.stroke();ctx.restore();ctx.setLineDash([]);
-  const half=localizerWidth(),a=pixel(-finalCourseLength,-half),b=pixel(0,-half),c=pixel(0,half),d=pixel(-finalCourseLength,half);
+  ctx.setLineDash([2,7]);ctx.strokeStyle='#a7835b';ctx.lineWidth=1;path([outerA,outerB]);ctx.stroke();path([outerC,outerD]);ctx.stroke();ctx.setLineDash([]);
+  const halfFar=localizerWidth(-finalCourseLength),halfNear=localizerWidth(0),a=pixel(-finalCourseLength,-halfFar),b=pixel(0,-halfNear),c=pixel(0,halfNear),d=pixel(-finalCourseLength,halfFar);
   ctx.fillStyle='#84d58a12';path([a,b,c,d],true);ctx.fill();
-  ctx.save();ctx.setLineDash([3,6]);ctx.strokeStyle=onNarrow?`rgba(143, 229, 145, ${.55+.45*pulse})`:'#527f59';ctx.lineWidth=onNarrow?1.5+2*pulse:1;ctx.shadowColor='#8fe591';ctx.shadowBlur=onNarrow?6+12*pulse:0;path([a,b]);ctx.stroke();path([c,d]);ctx.stroke();ctx.restore();
-  ctx.save();ctx.setLineDash([4,6]);ctx.strokeStyle=onCenter?`rgba(185, 255, 174, ${.55+.45*pulse})`:'#73af79';ctx.lineWidth=onCenter?1.5+2*pulse:1;ctx.shadowColor='#b9ffae';ctx.shadowBlur=onCenter?6+12*pulse:0;path([pixel(-finalCourseLength),pixel(0)]);ctx.stroke();ctx.restore();ctx.setLineDash([]);
-  const label=pixel(-finalCourseLength+.01,-half-.025);ctx.fillStyle='#8cb593';ctx.font='10px DM Mono, monospace';ctx.fillText(`FINAL COURSE ${fmt(runway.heading)}°`,label.x,label.y);
+  ctx.setLineDash([3,6]);ctx.strokeStyle='#527f59';path([a,b]);ctx.stroke();path([c,d]);ctx.stroke();
+  ctx.setLineDash([4,6]);ctx.strokeStyle='#73af79';path([pixel(-finalCourseLength),pixel(0)]);ctx.stroke();ctx.setLineDash([]);
+  const label=pixel(-finalCourseLength+.01,-halfFar-.025);ctx.fillStyle='#8cb593';ctx.font='10px DM Mono, monospace';ctx.fillText(`FINAL COURSE ${fmt(runway.heading)}°`,label.x,label.y);
   const gateA=pixel(0,-runway.halfWidth),gateB=pixel(0,runway.halfWidth);ctx.strokeStyle='#d3f7bb';ctx.lineWidth=5;path([gateA,gateB]);ctx.stroke();ctx.lineWidth=1;
   const runwayLabel=pixel(.02,-runway.halfWidth);ctx.fillStyle='#a2d89a';ctx.fillText(`RWY ${String(Math.round(runway.heading/10)%36).padStart(2,'0')}`,runwayLabel.x,runwayLabel.y);
   sweep=(t*.00035)%(Math.PI*2);const grad=ctx.createConicGradient(sweep,cx,cy);grad.addColorStop(0,'#9df6a900');grad.addColorStop(.94,'#9df6a900');grad.addColorStop(1,'#9df6a924');ctx.fillStyle=grad;ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#92e69b44';ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(sweep)*R,cy+Math.sin(sweep)*R);ctx.stroke();ctx.restore();
@@ -399,7 +404,12 @@ function draw(t){const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)retu
     ctx.strokeStyle='#f1ab6b';ctx.fillStyle='#f1ab6b';ctx.lineWidth=2;
     ctx.beginPath();ctx.moveTo(arrowX,arrowY);ctx.lineTo(tipX,tipY);ctx.stroke();
     ctx.beginPath();ctx.moveTo(tipX,tipY);ctx.lineTo(tipX-7*Math.cos(angle-.5),tipY-7*Math.sin(angle-.5));ctx.lineTo(tipX-7*Math.cos(angle+.5),tipY-7*Math.sin(angle+.5));ctx.closePath();ctx.fill();
-    ctx.strokeStyle='#a6dba2';ctx.beginPath();ctx.moveTo(x+8,y-8);ctx.lineTo(x+21,y-21);ctx.lineTo(x+69,y-21);ctx.stroke();ctx.fillStyle='#d5f4cb';ctx.font='11px DM Mono, monospace';ctx.fillText(plane.call,x+24,y-26);
+    const labelSide=x>w-145?-1:1,labelX=x+24*labelSide;ctx.textAlign=labelSide<0?'right':'left';
+    ctx.strokeStyle='#a6dba2';ctx.beginPath();ctx.moveTo(x+8*labelSide,y-8);ctx.lineTo(x+21*labelSide,y-21);ctx.lineTo(x+88*labelSide,y-21);ctx.stroke();ctx.fillStyle='#d5f4cb';ctx.font='11px DM Mono, monospace';ctx.fillText(plane.call,labelX,y-26);
+    const scoring=plane.scoringZone!=='OFF PATH',centerScoring=plane.scoringZone==='CENTER';
+    const scoringPulse=centerScoring&&!reduceRadarMotion ? .9+.1*(.5+.5*Math.sin(t*.014)) : 1;
+    ctx.save();ctx.globalAlpha=scoring?scoringPulse:.55;ctx.fillStyle=centerScoring?'#caffb9':plane.scoringZone==='NARROW'?'#91dfa0':plane.scoringZone==='WIDE'?'#f2bd78':'#789b88';ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=centerScoring?10:scoring?5:0;ctx.font=`700 ${centerScoring?12:10}px DM Mono, monospace`;
+    const multiplier=`×${plane.currentMultiplier.toFixed(1)}`;ctx.fillText(`${plane.scoringZone} +${plane.currentPointRate.toFixed(1)} PT/s  ${multiplier}`,labelX,y-10);ctx.restore();ctx.textAlign='left';
   }
   ctx.restore();
 }
