@@ -38,7 +38,7 @@ const runway = {x:.5,y:.5,heading:90,halfWidth:.047};
 const camera = {x:.5,y:.5,zoom:1.3};
 const approachStartDistance=.98,finalCourseLength=.85,rangeScale=10;
 const wind = {direction:0,targetDirection:0,speed:0,targetSpeed:0,shownDirection:0,shownSpeed:0,minKnots:0,maxKnots:0,knots:0,x:0,y:0,nextShift:0,lastDisplay:0,initialized:false};
-const requiredCenterSeconds=9;
+const requiredCenterSeconds=5;
 const centerPointsPerSecond=28,narrowPointsPerSecond=18,broadPointsPerSecond=6;
 const scoringReferenceSpeed=.024;
 const reduceRadarMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
@@ -132,7 +132,10 @@ function showMessage(t,seconds=4,spoken=t,onFinished,onStart,kind='general'){
   const entry={text:t,seconds,spoken,onFinished,onStart,kind};
   if(!voiceEnabled){displayMessage(entry);return false}
   if(kind==='heading')radioQueue=radioQueue.filter(waiting=>waiting.kind!=='heading');
-  radioQueue.push(entry);
+  if(kind==='distance'){
+    radioQueue=radioQueue.filter(waiting=>waiting.kind!=='course'&&waiting.kind!=='distance');
+    radioQueue.unshift(entry);
+  }else radioQueue.push(entry);
   playNextRadio();
   return true;
 }
@@ -165,7 +168,7 @@ function courseAdvisory(){
   const distanceCall=plane.nextDistanceCall>=2&&miles<=plane.nextDistanceCall;
   const phrase=distanceCall?`${plane.nextDistanceCall} MILES FROM RUNWAY, ${course}.`:`${course}.`;
   if(distanceCall)plane.nextDistanceCall-=2;
-  showMessage(phrase,5,phrase,undefined,undefined,'course');
+  showMessage(phrase,5,phrase,undefined,undefined,distanceCall?'distance':'course');
 }
 function localizerWidth(along=0){return Math.max(.007,runway.halfWidth*.2)+Math.abs(Math.min(0,along))*Math.tan(rad(1.35))}
 function broadLocalizerWidth(along=0){return Math.max(.014,runway.halfWidth*.35)+Math.abs(Math.min(0,along))*Math.tan(rad(4.5))}
@@ -214,7 +217,7 @@ function updateLocalizer(dt){
   const broadRate=broadPointsPerSecond*speedFactor;
   const alignment=clamp(1-headingError(plane.h)/45,0,1);
   const centerBaseRate=(narrowPointsPerSecond+(centerPointsPerSecond-narrowPointsPerSecond)*alignment)*speedFactor;
-  const centerMultiplier=1+clamp((plane.centerSeconds-3)/6,0,1);
+  const centerMultiplier=1+clamp(plane.centerSeconds/requiredCenterSeconds,0,1);
   const centerRate=centerBaseRate*centerMultiplier;
   if(onCenter)score+=centerRate*dt;
   else if(onNarrow)score+=narrowRate*dt;
@@ -222,10 +225,9 @@ function updateLocalizer(dt){
   plane.scoringZone=onCenter?'CENTER':onNarrow?'NARROW':onBroad?'WIDE':'OFF PATH';
   plane.currentPointRate=onCenter?centerRate:onNarrow?narrowRate:onBroad?broadRate:0;
   plane.currentMultiplier=onCenter?centerMultiplier:1;
-  const state=!inFinal?'ACQUIRE':onCenter?`CENTER x${centerMultiplier.toFixed(1)} +${centerRate.toFixed(1)}/s`:onNarrow?`NARROW +${narrowRate.toFixed(1)}/s`:onBroad?`WIDE +${broadRate.toFixed(1)}/s`:'OFF PATH';
-  const streak=onCenter?` ${Math.min(requiredCenterSeconds,plane.centerSeconds).toFixed(1)} / ${requiredCenterSeconds}s`:'';
-  $('locStatus').textContent=`LOC · ${state}${streak}`;
-  $('locStatus').classList.toggle('established',onCenter&&plane.centerSeconds>=3);
+  const state=!inFinal?'ACQUIRE':onCenter?`CENTER ×${centerMultiplier.toFixed(1)} +${Math.round(centerRate)}/s`:onNarrow?`NARROW +${Math.round(narrowRate)}/s`:onBroad?`WIDE +${Math.round(broadRate)}/s`:'OFF PATH';
+  $('locStatus').textContent=`LOC · ${state}`;
+  $('locStatus').classList.toggle('established',onCenter&&plane.centerSeconds>=requiredCenterSeconds);
 }
 function modal(kicker,title,text,info,button,action){ui.modalKicker.textContent=kicker;ui.modalTitle.textContent=title;ui.modalText.textContent=text;ui.modalInfo.innerHTML=info;ui.modalButton.textContent=button;ui.modalButton.onclick=action;ui.overlay.querySelector('.modal').classList.toggle('missed',kicker==='MISSED APPROACH');$('modalSound').hidden=kicker!=='BRIEFING'||!voiceSupported;$('shareScore').hidden=kicker!=='MISSED APPROACH'&&kicker!=='TOUCHDOWN';$('shareScore').textContent='Share Result ↗';ui.overlay.hidden=false}
 $('shareScore').onclick=async()=>{
@@ -348,7 +350,12 @@ function update(dt,t){
     end(onRunway,'MISSED APPROACH.');return;
   }
   if(position.along<-approachStartDistance-.2||Math.abs(position.side)>.65){end(false);return}
-  if(!plane.pendingHeading&&activeRadio?.kind!=='course'&&!radioQueue.some(entry=>entry.kind==='course')&&position.along>-approachStartDistance+.03&&t-plane.lastCourseCall>=4000&&t-plane.lastCommandAt>=2500){courseAdvisory();plane.lastCourseCall=t}
+  const approachMiles=Math.max(0,-position.along*rangeScale);
+  const distanceDue=plane.nextDistanceCall>=2&&approachMiles<=plane.nextDistanceCall;
+  const distanceSoon=plane.nextDistanceCall>=2&&approachMiles<=plane.nextDistanceCall+1.5;
+  const advisoryBusy=['course','distance'].includes(activeRadio?.kind)||radioQueue.some(entry=>entry.kind==='course'||entry.kind==='distance');
+  const regularAdvisoryDue=!distanceSoon&&t-plane.lastCourseCall>=4000&&t-plane.lastCommandAt>=2500;
+  if(!plane.pendingHeading&&!advisoryBusy&&position.along>-approachStartDistance+.03&&(distanceDue||regularAdvisoryDue)){courseAdvisory();plane.lastCourseCall=t}
   const runwayBearing=norm(Math.atan2(runway.x-plane.x,plane.y-runway.y)*180/Math.PI);
   ui.range.textContent=(dist*rangeScale).toFixed(1);ui.heading.textContent=fmt(plane.h);ui.currentPointer.style.transform=`rotate(${plane.h+180}deg)`;ui.currentPointer.hidden=false;ui.runwayGuide.style.transform=`rotate(${runwayBearing}deg)`;ui.runwayGuide.hidden=false;ui.dial.setAttribute('aria-valuetext',`Selected ${fmt(selected)} degrees, current ${fmt(plane.h)} degrees, runway ${fmt(runwayBearing)} degrees`);ui.callsign.textContent=plane.call;renderScore();
 }
@@ -408,7 +415,8 @@ function draw(t){const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)retu
     const scoring=plane.scoringZone!=='OFF PATH',centerScoring=plane.scoringZone==='CENTER';
     const scoringPulse=centerScoring&&!reduceRadarMotion ? .9+.1*(.5+.5*Math.sin(t*.014)) : 1;
     ctx.save();ctx.globalAlpha=scoring?scoringPulse:.55;ctx.fillStyle=centerScoring?'#caffb9':plane.scoringZone==='NARROW'?'#91dfa0':plane.scoringZone==='WIDE'?'#f2bd78':'#789b88';ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=centerScoring?10:scoring?5:0;ctx.font=`700 ${centerScoring?12:10}px DM Mono, monospace`;
-    const multiplier=`×${plane.currentMultiplier.toFixed(1)}`;ctx.fillText(`${plane.scoringZone} +${plane.currentPointRate.toFixed(1)} PT/s  ${multiplier}`,labelX,y-10);ctx.restore();ctx.textAlign='left';
+    const multiplier=`×${plane.currentMultiplier.toFixed(1)}`;ctx.fillText(`+${Math.round(plane.currentPointRate)} PT/s  ${multiplier}`,labelX,y-10);
+    if(centerScoring){const progress=clamp(plane.centerSeconds/requiredCenterSeconds,0,1),barWidth=76,barX=labelSide<0?labelX-barWidth:labelX,barY=y-4;ctx.shadowBlur=0;ctx.globalAlpha=.8;ctx.fillStyle='#173c2a';ctx.fillRect(barX,barY,barWidth,4);ctx.fillStyle='#baffaa';ctx.fillRect(barX,barY,barWidth*progress,4);ctx.strokeStyle='#8acb8799';ctx.lineWidth=1;ctx.strokeRect(barX-.5,barY-.5,barWidth+1,5)}ctx.restore();ctx.textAlign='left';
   }
   ctx.restore();
 }
