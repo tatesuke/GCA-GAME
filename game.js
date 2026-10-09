@@ -33,7 +33,7 @@ function showDialog(kind,action,call,bonus){
   $('shareScore').hidden=kind!=='missed'&&kind!=='landing';
 }
 languageSelect.onchange=()=>{language=languageSelect.value;document.documentElement.lang=language;if(activeDialog&&!ui.overlay.hidden)showDialog(activeDialog.kind,activeDialog.action,activeDialog.call,activeDialog.bonus)};
-const ui = {callsign:$('callsign'),range:$('range'),heading:$('heading'),score:$('score'),maxScore:$('maxScore'),landingCount:$('landingCount'),maxLandings:$('maxLandings'),selected:$('selectedHeading'),pointer:$('dialPointer'),dial:$('dial'),message:$('message'),messageText:$('messageText'),note:$('commandNote'),overlay:$('overlay'),modalKicker:$('modalKicker'),modalTitle:$('modalTitle'),modalText:$('modalText'),modalInfo:$('modalInfo'),modalButton:$('modalButton')};
+const ui = {callsign:$('callsign'),range:$('range'),heading:$('heading'),score:$('score'),maxScore:$('maxScore'),landingCount:$('landingCount'),maxLandings:$('maxLandings'),selected:$('selectedHeading'),pointer:$('dialPointer'),currentPointer:$('dialCurrentPointer'),dial:$('dial'),message:$('message'),messageText:$('messageText'),note:$('commandNote'),overlay:$('overlay'),modalKicker:$('modalKicker'),modalTitle:$('modalTitle'),modalText:$('modalText'),modalInfo:$('modalInfo'),modalButton:$('modalButton')};
 const runway = {x:.5,y:.5,heading:90,halfWidth:.047};
 const camera = {x:.5,y:.5,zoom:1.3};
 const approachStartDistance=.98,finalCourseLength=.85,rangeScale=10;
@@ -41,6 +41,7 @@ const wind = {direction:0,targetDirection:0,speed:0,targetSpeed:0,shownDirection
 const requiredLocSeconds=7;
 const narrowPointsPerSecond=20,broadPointsPerSecond=6;
 const scoringReferenceSpeed=.024;
+const reduceRadarMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
 const goAroundPenalty=100,sharpTurnPenalty=40;
 let selected = 90, plane, score = 0, landings = 0, misses = 0, goArounds = 0, playing = false, lastTime = 0, sweep = 0, messageUntil = 0, nextCallsign = 0, elapsed = 0;
 const maxScoreKey='gca.bestCompletedRun';
@@ -115,7 +116,7 @@ function playNextRadio(){
   activeRadio=entry;
   displayMessage(entry);
   const utterance=new SpeechSynthesisUtterance(entry.spoken);
-  utterance.lang='en-US';utterance.rate=.94;utterance.pitch=.88;
+  utterance.lang='en-US';utterance.rate=1.00;utterance.pitch=.88;
   utterance.onend=()=>finishRadio(entry);
   utterance.onerror=()=>finishRadio(entry);
   try{window.speechSynthesis.speak(utterance)}catch{finishRadio(entry);return}
@@ -334,7 +335,7 @@ function update(dt,t){
   }
   if(position.along<-approachStartDistance-.2||Math.abs(position.side)>.65){end(false);return}
   if(!plane.pendingHeading&&activeRadio?.kind!=='course'&&!radioQueue.some(entry=>entry.kind==='course')&&position.along>-approachStartDistance+.03&&t-plane.lastCourseCall>=4000&&t-plane.lastCommandAt>=2500){courseAdvisory();plane.lastCourseCall=t}
-  ui.range.textContent=(dist*rangeScale).toFixed(1);ui.heading.textContent=fmt(plane.h);ui.callsign.textContent=plane.call;renderScore();
+  ui.range.textContent=(dist*rangeScale).toFixed(1);ui.heading.textContent=fmt(plane.h);ui.currentPointer.style.transform=`rotate(${plane.h+180}deg)`;ui.currentPointer.hidden=false;ui.dial.setAttribute('aria-valuetext',`Selected ${fmt(selected)} degrees, current ${fmt(plane.h)} degrees`);ui.callsign.textContent=plane.call;renderScore();
 }
 function resize(){const r=canvas.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(r.width*d);canvas.height=Math.round(r.height*d);ctx.setTransform(d,0,0,d,0,0)}
 function resetRadar(){const center=coursePoint(-approachStartDistance/2);camera.x=center.x;camera.y=center.y;camera.zoom=.72}
@@ -364,12 +365,19 @@ function draw(t){const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)retu
   const pixel=(along,side=0)=>{const p=coursePoint(along,side);return {x:p.x*w,y:p.y*h}};
   const path=(points,close=false)=>{ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));if(close)ctx.closePath()};
   const broad=broadLocalizerWidth(),outerA=pixel(-finalCourseLength,-broad),outerB=pixel(0,-broad),outerC=pixel(0,broad),outerD=pixel(-finalCourseLength,broad);
+  const position=plane?coursePosition(plane.x,plane.y):null;
+  const onFinal=position&&position.along>=-finalCourseLength&&position.along<-.02;
+  const centerCaptureWidth=localizerWidth()*.35;
+  const onCenter=onFinal&&Math.abs(position.side)<centerCaptureWidth;
+  const onNarrow=onFinal&&!onCenter&&Math.abs(position.side)<localizerWidth();
+  const onAmber=onFinal&&!onCenter&&!onNarrow&&Math.abs(position.side)<broad;
+  const pulse=reduceRadarMotion?1:.35+.65*(.5+.5*Math.sin(t*.009));
   ctx.fillStyle='#d9a36f10';path([outerA,outerB,outerC,outerD],true);ctx.fill();
-  ctx.setLineDash([2,7]);ctx.strokeStyle='#a7835b';path([outerA,outerB]);ctx.stroke();path([outerC,outerD]);ctx.stroke();ctx.setLineDash([]);
+  ctx.save();ctx.setLineDash([2,7]);ctx.strokeStyle=onAmber?`rgba(255, 184, 105, ${.55+.45*pulse})`:'#a7835b';ctx.lineWidth=onAmber?1.5+2*pulse:1;ctx.shadowColor='#ffae61';ctx.shadowBlur=onAmber?6+12*pulse:0;path([outerA,outerB]);ctx.stroke();path([outerC,outerD]);ctx.stroke();ctx.restore();ctx.setLineDash([]);
   const half=localizerWidth(),a=pixel(-finalCourseLength,-half),b=pixel(0,-half),c=pixel(0,half),d=pixel(-finalCourseLength,half);
   ctx.fillStyle='#84d58a12';path([a,b,c,d],true);ctx.fill();
-  ctx.setLineDash([3,6]);ctx.strokeStyle='#527f59';path([a,b]);ctx.stroke();path([c,d]);ctx.stroke();
-  ctx.setLineDash([4,6]);ctx.strokeStyle='#73af79';path([pixel(-finalCourseLength),pixel(0)]);ctx.stroke();ctx.setLineDash([]);
+  ctx.save();ctx.setLineDash([3,6]);ctx.strokeStyle=onNarrow?`rgba(143, 229, 145, ${.55+.45*pulse})`:'#527f59';ctx.lineWidth=onNarrow?1.5+2*pulse:1;ctx.shadowColor='#8fe591';ctx.shadowBlur=onNarrow?6+12*pulse:0;path([a,b]);ctx.stroke();path([c,d]);ctx.stroke();ctx.restore();
+  ctx.save();ctx.setLineDash([4,6]);ctx.strokeStyle=onCenter?`rgba(185, 255, 174, ${.55+.45*pulse})`:'#73af79';ctx.lineWidth=onCenter?1.5+2*pulse:1;ctx.shadowColor='#b9ffae';ctx.shadowBlur=onCenter?6+12*pulse:0;path([pixel(-finalCourseLength),pixel(0)]);ctx.stroke();ctx.restore();ctx.setLineDash([]);
   const label=pixel(-finalCourseLength+.01,-half-.025);ctx.fillStyle='#8cb593';ctx.font='10px DM Mono, monospace';ctx.fillText(`FINAL COURSE ${fmt(runway.heading)}°`,label.x,label.y);
   const gateA=pixel(0,-runway.halfWidth),gateB=pixel(0,runway.halfWidth);ctx.strokeStyle='#d3f7bb';ctx.lineWidth=5;path([gateA,gateB]);ctx.stroke();ctx.lineWidth=1;
   const runwayLabel=pixel(.02,-runway.halfWidth);ctx.fillStyle='#a2d89a';ctx.fillText(`RWY ${String(Math.round(runway.heading/10)%36).padStart(2,'0')}`,runwayLabel.x,runwayLabel.y);
